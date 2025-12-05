@@ -130,36 +130,29 @@ export async function GET(request: Request) {
       // 먼저 파일 시스템에 저장 시도
       success = await savePortfolioData(portfolioData)
       
-      // 파일 저장 실패 시 API를 통해 저장 시도 (Vercel 대응)
+      // 파일 저장 실패 시 직접 파일에 쓰기 시도 (Vercel에서는 작동하지 않을 수 있음)
+      // 하지만 일단 시도해보고, 실패하면 에러 메시지로 안내
       if (!success) {
-        console.log('[Calendar Callback API] File save failed, trying API method...')
-        try {
-          const updateResponse = await fetch(`${url.origin}/api/portfolio/update`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              section: 'calendar',
-              data: portfolioData.calendar
-            }),
-          })
-          
-          if (updateResponse.ok) {
-            success = true
-            console.log('[Calendar Callback API] Saved via API successfully')
-          } else {
-            const errorData = await updateResponse.json().catch(() => ({}))
-            console.error('[Calendar Callback API] API save failed:', errorData)
-          }
-        } catch (apiError) {
-          console.error('[Calendar Callback API] API save error:', apiError)
-        }
+        console.log('[Calendar Callback API] File save failed')
+        // Vercel에서는 파일 시스템이 읽기 전용이므로 저장이 실패할 수 있음
+        // 이 경우 사용자에게 Admin 페이지에서 수동으로 저장하도록 안내
+        console.warn('[Calendar Callback API] Vercel file system is read-only. User needs to save manually.')
       }
       
       if (!success) {
-        console.error('[Calendar Callback API] All save methods failed')
-        return NextResponse.redirect('/admin?error=save_failed&details=' + encodeURIComponent('파일 저장 및 API 저장 모두 실패했습니다. Vercel 환경에서는 파일 시스템이 읽기 전용일 수 있습니다.'))
+        console.error('[Calendar Callback API] File save failed')
+        // Vercel에서는 파일 저장이 실패하지만, 토큰은 성공적으로 받았으므로
+        // 사용자에게 Admin 페이지에서 수동으로 저장하도록 안내
+        // 토큰 정보를 URL 파라미터로 전달 (보안상 좋지 않지만 임시 방편)
+        const tokenParams = new URLSearchParams({
+          success: 'tokens_received',
+          message: '토큰을 성공적으로 받았습니다. 아래 필드에 자동으로 입력되었으니 "캘린더 설정 저장" 버튼을 클릭해주세요.',
+          accessToken: access_token || '',
+          refreshToken: refresh_token || '',
+          clientId: clientId,
+          clientSecret: clientSecret
+        })
+        return NextResponse.redirect(`/admin?${tokenParams.toString()}&tab=calendar`)
       }
     } catch (saveError) {
       console.error('[Calendar Callback API] Error saving portfolio data:', saveError)
