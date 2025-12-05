@@ -28,14 +28,27 @@ export async function GET(request: Request) {
     let clientSecret: string
     let redirectBaseUrl: string
     try {
-      const stateData = JSON.parse(state)
+      // State는 URL 인코딩되어 있으므로 디코딩 필요
+      const decodedState = decodeURIComponent(state)
+      console.log('[Calendar Callback API] Decoded state:', decodedState.substring(0, 100) + '...')
+      
+      const stateData = JSON.parse(decodedState)
       clientId = stateData.clientId
       clientSecret = stateData.clientSecret
       redirectBaseUrl = stateData.redirectBaseUrl || 'https://tong2-portfolio.vercel.app'
+      
+      console.log('[Calendar Callback API] Parsed state data:', {
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+        clientIdLength: clientId?.length,
+        clientSecretLength: clientSecret?.length,
+        redirectBaseUrl
+      })
     } catch (parseError) {
       console.error('[Calendar Callback API] State parse error:', parseError)
-      console.error('[Calendar Callback API] State value:', state)
-      return NextResponse.redirect('/admin?error=invalid_state&details=' + encodeURIComponent('State 파싱 실패'))
+      console.error('[Calendar Callback API] State value (raw):', state)
+      console.error('[Calendar Callback API] State value (decoded):', decodeURIComponent(state))
+      return NextResponse.redirect('/admin?error=invalid_state&details=' + encodeURIComponent(`State 파싱 실패: ${parseError instanceof Error ? parseError.message : '알 수 없는 오류'}`))
     }
 
     // 리다이렉트 URI 생성 (현재 요청 URL 기반으로 정확히 생성)
@@ -111,17 +124,47 @@ export async function GET(request: Request) {
       portfolioData.calendar.refreshToken = refresh_token
     }
 
-    // 데이터 저장
-    let success
+    // 데이터 저장 - Vercel에서는 파일 시스템이 읽기 전용이므로 API를 통해 저장 시도
+    let success = false
     try {
+      // 먼저 파일 시스템에 저장 시도
       success = await savePortfolioData(portfolioData)
+      
+      // 파일 저장 실패 시 API를 통해 저장 시도 (Vercel 대응)
       if (!success) {
-        console.error('[Calendar Callback API] savePortfolioData returned false')
-        return NextResponse.redirect('/admin?error=save_failed')
+        console.log('[Calendar Callback API] File save failed, trying API method...')
+        try {
+          const updateResponse = await fetch(`${url.origin}/api/portfolio/update`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              section: 'calendar',
+              data: portfolioData.calendar
+            }),
+          })
+          
+          if (updateResponse.ok) {
+            success = true
+            console.log('[Calendar Callback API] Saved via API successfully')
+          } else {
+            const errorData = await updateResponse.json().catch(() => ({}))
+            console.error('[Calendar Callback API] API save failed:', errorData)
+          }
+        } catch (apiError) {
+          console.error('[Calendar Callback API] API save error:', apiError)
+        }
+      }
+      
+      if (!success) {
+        console.error('[Calendar Callback API] All save methods failed')
+        return NextResponse.redirect('/admin?error=save_failed&details=' + encodeURIComponent('파일 저장 및 API 저장 모두 실패했습니다. Vercel 환경에서는 파일 시스템이 읽기 전용일 수 있습니다.'))
       }
     } catch (saveError) {
       console.error('[Calendar Callback API] Error saving portfolio data:', saveError)
-      return NextResponse.redirect(`/admin?error=save_failed&details=${encodeURIComponent(saveError instanceof Error ? saveError.message : '알 수 없는 오류')}`)
+      const errorMsg = saveError instanceof Error ? saveError.message : '알 수 없는 오류'
+      return NextResponse.redirect(`/admin?error=save_failed&details=${encodeURIComponent(errorMsg)}`)
     }
 
     console.log('[Calendar Callback API] Tokens saved successfully')
