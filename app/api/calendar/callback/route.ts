@@ -32,12 +32,19 @@ export async function GET(request: Request) {
       clientId = stateData.clientId
       clientSecret = stateData.clientSecret
       redirectBaseUrl = stateData.redirectBaseUrl || 'https://tong2-portfolio.vercel.app'
-    } catch {
-      return NextResponse.redirect('/admin?error=invalid_state')
+    } catch (parseError) {
+      console.error('[Calendar Callback API] State parse error:', parseError)
+      console.error('[Calendar Callback API] State value:', state)
+      return NextResponse.redirect('/admin?error=invalid_state&details=' + encodeURIComponent('State 파싱 실패'))
     }
 
-    // 리다이렉트 URI 생성 (Google Cloud Console에 등록된 URI와 정확히 일치해야 함)
-    const redirectUri = `${redirectBaseUrl}/api/calendar/callback`
+    // 리다이렉트 URI 생성 (현재 요청 URL 기반으로 정확히 생성)
+    const url = new URL(request.url)
+    const redirectUri = `${url.origin}/api/calendar/callback`
+    
+    console.log('[Calendar Callback API] Current URL:', request.url)
+    console.log('[Calendar Callback API] Redirect URI:', redirectUri)
+    console.log('[Calendar Callback API] State redirectBaseUrl:', redirectBaseUrl)
 
     // 인증 코드를 토큰으로 교환
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -55,9 +62,19 @@ export async function GET(request: Request) {
     })
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json().catch(() => ({}))
-      console.error('[Calendar Callback API] Token exchange failed:', errorData)
-      return NextResponse.redirect(`/admin?error=token_exchange_failed&details=${encodeURIComponent(JSON.stringify(errorData))}`)
+      const errorText = await tokenResponse.text()
+      let errorData: any = {}
+      try {
+        errorData = JSON.parse(errorText)
+      } catch {
+        errorData = { error: errorText }
+      }
+      console.error('[Calendar Callback API] Token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: errorData
+      })
+      return NextResponse.redirect(`/admin?error=token_exchange_failed&details=${encodeURIComponent(JSON.stringify(errorData, null, 2))}`)
     }
 
     const tokenData = await tokenResponse.json()

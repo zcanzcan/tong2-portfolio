@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Edit2, User, Briefcase,
     Code, Folder, BookOpen, Book, ExternalLink,
     Layout, Image as ImageIcon, Link as LinkIcon, ShoppingCart,
-    LogOut, Upload, X, Home, Share2, Calendar as CalendarIcon, Eye, ChevronDown, Award
+    LogOut, Upload, X, Home, Share2, Calendar as CalendarIcon, Eye, ChevronDown, Award, Terminal, AlertCircle
 } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -54,6 +54,10 @@ export default function AdminPage() {
     const [uploading, setUploading] = useState<string | null>(null) // 'profile' | 'project' | 'publication' | 'resume'
     const [uploadingResume, setUploadingResume] = useState(false)
 
+    // Error Log Console States
+    const [showErrorConsole, setShowErrorConsole] = useState(false)
+    const [errorLogs, setErrorLogs] = useState<Array<{ timestamp: string; message: string; details?: string }>>([])
+
     useEffect(() => {
         fetchAllData()
         
@@ -69,9 +73,22 @@ export default function AdminPage() {
             window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
         } else if (error) {
             const errorMessage = message || '오류가 발생했습니다.'
-            alert(`❌ ${errorMessage}`)
+            const details = params.get('details') || ''
+            const stack = params.get('stack') || ''
+            
+            // 에러 로그에 추가
+            setErrorLogs(prev => [{
+                timestamp: new Date().toLocaleString('ko-KR'),
+                message: errorMessage,
+                details: details || stack || undefined
+            }, ...prev])
+            
+            // 콘솔 자동 열기
+            setShowErrorConsole(true)
+            
+            alert(`❌ ${errorMessage}${details ? '\n\n상세 정보는 에러 콘솔을 확인하세요.' : ''}`)
             // URL에서 파라미터 제거
-            window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
+            window.history.replaceState({}, '', window.location.pathname + (activeTab ? `?tab=${activeTab}` : ''))
         }
     }, [])
 

@@ -33,9 +33,13 @@ export async function GET(request: Request) {
     }
 
     // 리다이렉트 URI 생성 (현재 도메인 기반)
-    const origin = request.headers.get('origin') || request.headers.get('referer') || ''
-    const baseUrl = origin ? new URL(origin).origin : 'http://localhost:3000'
+    // request.url을 사용하여 정확한 현재 도메인 가져오기
+    const url = new URL(request.url)
+    const baseUrl = url.origin
     const redirectUri = `${baseUrl}/api/calendar/callback`
+    
+    console.log('[Calendar Auth API] Base URL:', baseUrl)
+    console.log('[Calendar Auth API] Redirect URI:', redirectUri)
 
     // Google OAuth 2.0 인증 URL 생성
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
