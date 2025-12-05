@@ -35,11 +35,21 @@ export async function GET(request: Request) {
     // 리다이렉트 URI 생성 (현재 도메인 기반)
     // request.url을 사용하여 정확한 현재 도메인 가져오기
     const url = new URL(request.url)
-    const baseUrl = url.origin
+    let baseUrl = url.origin
+    
+    // 로컬 개발 환경 감지 및 처리
+    // localhost나 127.0.0.1인 경우 명시적으로 http://localhost:3000 사용
+    if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+      // 포트 번호 추출 또는 기본값 사용
+      const port = url.port || '3000'
+      baseUrl = `http://localhost:${port}`
+    }
+    
     const redirectUri = `${baseUrl}/api/calendar/callback`
     
     console.log('[Calendar Auth API] Base URL:', baseUrl)
     console.log('[Calendar Auth API] Redirect URI:', redirectUri)
+    console.log('[Calendar Auth API] Original URL:', request.url)
 
     // Google OAuth 2.0 인증 URL 생성
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
