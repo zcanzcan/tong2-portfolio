@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     authUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events')
     authUrl.searchParams.set('access_type', 'offline') // Refresh Token을 받기 위해 필요
     authUrl.searchParams.set('prompt', 'consent') // 항상 Refresh Token을 받기 위해 필요
-    authUrl.searchParams.set('state', JSON.stringify({ clientId, clientSecret })) // 콜백에서 사용할 데이터
+    authUrl.searchParams.set('state', JSON.stringify({ clientId, clientSecret, redirectBaseUrl: baseUrl })) // 콜백에서 사용할 데이터
 
     // 인증 URL로 리다이렉트
     return NextResponse.redirect(authUrl.toString())

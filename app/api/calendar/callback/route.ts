@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { getPortfolioData, savePortfolioData } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
@@ -10,14 +9,6 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: Request) {
   try {
-    // 관리자 인증 확인
-    const cookieStore = await cookies()
-    const adminSession = cookieStore.get('admin_session')
-    
-    if (!adminSession || adminSession.value !== 'true') {
-      return NextResponse.redirect('/admin?error=unauthorized')
-    }
-
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     const state = searchParams.get('state')
@@ -35,18 +26,18 @@ export async function GET(request: Request) {
     // State에서 Client ID와 Secret 복원
     let clientId: string
     let clientSecret: string
+    let redirectBaseUrl: string
     try {
       const stateData = JSON.parse(state)
       clientId = stateData.clientId
       clientSecret = stateData.clientSecret
+      redirectBaseUrl = stateData.redirectBaseUrl || 'https://tong2-portfolio.vercel.app'
     } catch {
       return NextResponse.redirect('/admin?error=invalid_state')
     }
 
-    // 리다이렉트 URI 생성
-    const origin = request.headers.get('origin') || request.headers.get('referer') || ''
-    const baseUrl = origin ? new URL(origin).origin : 'http://localhost:3000'
-    const redirectUri = `${baseUrl}/api/calendar/callback`
+    // 리다이렉트 URI 생성 (Google Cloud Console에 등록된 URI와 정확히 일치해야 함)
+    const redirectUri = `${redirectBaseUrl}/api/calendar/callback`
 
     // 인증 코드를 토큰으로 교환
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -77,9 +68,16 @@ export async function GET(request: Request) {
     }
 
     // 포트폴리오 데이터 읽기
-    const portfolioData = await getPortfolioData()
-    if (!portfolioData) {
-      return NextResponse.redirect('/admin?error=read_failed')
+    let portfolioData
+    try {
+      portfolioData = await getPortfolioData()
+      if (!portfolioData) {
+        console.error('[Calendar Callback API] Failed to read portfolio data: getPortfolioData returned null')
+        return NextResponse.redirect('/admin?error=read_failed')
+      }
+    } catch (readError) {
+      console.error('[Calendar Callback API] Error reading portfolio data:', readError)
+      return NextResponse.redirect(`/admin?error=read_failed&details=${encodeURIComponent(readError instanceof Error ? readError.message : '알 수 없는 오류')}`)
     }
 
     // 캘린더 설정 업데이트
@@ -97,9 +95,16 @@ export async function GET(request: Request) {
     }
 
     // 데이터 저장
-    const success = await savePortfolioData(portfolioData)
-    if (!success) {
-      return NextResponse.redirect('/admin?error=save_failed')
+    let success
+    try {
+      success = await savePortfolioData(portfolioData)
+      if (!success) {
+        console.error('[Calendar Callback API] savePortfolioData returned false')
+        return NextResponse.redirect('/admin?error=save_failed')
+      }
+    } catch (saveError) {
+      console.error('[Calendar Callback API] Error saving portfolio data:', saveError)
+      return NextResponse.redirect(`/admin?error=save_failed&details=${encodeURIComponent(saveError instanceof Error ? saveError.message : '알 수 없는 오류')}`)
     }
 
     console.log('[Calendar Callback API] Tokens saved successfully')
@@ -108,7 +113,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect('/admin?success=calendar_connected&tab=calendar')
   } catch (error) {
     console.error('[Calendar Callback API] Error:', error)
-    return NextResponse.redirect(`/admin?error=callback_error&details=${encodeURIComponent(error instanceof Error ? error.message : '알 수 없는 오류')}`)
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+    const errorStack = error instanceof Error ? error.stack : ''
+    console.error('[Calendar Callback API] Error stack:', errorStack)
+    
+    // 상세한 에러 정보를 포함한 리다이렉트
+    return NextResponse.redirect(`/admin?error=callback_error&details=${encodeURIComponent(errorMessage)}&stack=${encodeURIComponent(errorStack.substring(0, 200))}`)
   }
 }
 
