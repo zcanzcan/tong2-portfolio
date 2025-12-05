@@ -56,6 +56,23 @@ export default function AdminPage() {
 
     useEffect(() => {
         fetchAllData()
+        
+        // URL 파라미터에서 성공/실패 메시지 확인
+        const params = new URLSearchParams(window.location.search)
+        const success = params.get('success')
+        const error = params.get('error')
+        const message = params.get('message')
+        
+        if (success === 'calendar_connected') {
+            alert('✅ Google Calendar 연결이 완료되었습니다! 토큰이 자동으로 저장되었습니다.')
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
+        } else if (error) {
+            const errorMessage = message || '오류가 발생했습니다.'
+            alert(`❌ ${errorMessage}`)
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
+        }
     }, [])
 
     const fetchAllData = async () => {
@@ -2373,27 +2390,68 @@ export default function AdminPage() {
                                 <strong className="text-red-400/80">현재 입력된 ID:</strong> <code className="text-white/60">{calendar.calendarId || '(없음)'}</code>
                             </p>
                         </div>
-                        <div>
-                            <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client ID (일정 등록용)</label>
-                            <input
-                                type="text"
-                                value={(calendar || {}).oauthClientId || ''}
-                                onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientId: e.target.value })}
-                                className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
-                                placeholder="OAuth 2.0 Client ID (예: 736669320223-xxxxx.apps.googleusercontent.com)"
-                            />
+                        {/* 자동 연결 섹션 */}
+                        <div className="p-4 bg-gradient-to-r from-blue-500/10 to-green-500/10 border-2 border-blue-500/30 rounded-lg">
+                            <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                                <span className="text-green-400">✨</span> 자동 연결 (권장)
+                            </h4>
+                            <p className="text-sm text-white/70 mb-4">
+                                Google Cloud Console에서 Client ID와 Client Secret만 입력하면, 버튼 클릭 한 번으로 자동으로 토큰을 받아서 저장합니다!
+                            </p>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client ID</label>
+                                    <input
+                                        type="text"
+                                        value={(calendar || {}).oauthClientId || ''}
+                                        onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientId: e.target.value })}
+                                        className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
+                                        placeholder="OAuth 2.0 Client ID (예: 736669320223-xxxxx.apps.googleusercontent.com)"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client Secret</label>
+                                    <input
+                                        type="password"
+                                        value={(calendar || {}).oauthClientSecret || ''}
+                                        onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientSecret: e.target.value })}
+                                        className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
+                                        placeholder="OAuth 2.0 Client Secret (예: GOCSPX-xxxxx)"
+                                    />
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        const clientId = (calendar || {}).oauthClientId
+                                        const clientSecret = (calendar || {}).oauthClientSecret
+                                        
+                                        if (!clientId || !clientSecret) {
+                                            alert('❌ Client ID와 Client Secret을 먼저 입력해주세요.')
+                                            return
+                                        }
+                                        
+                                        // Google 인증 페이지로 리다이렉트
+                                        const authUrl = `/api/calendar/auth?clientId=${encodeURIComponent(clientId)}&clientSecret=${encodeURIComponent(clientSecret)}`
+                                        window.location.href = authUrl
+                                    }}
+                                    disabled={!(calendar || {}).oauthClientId || !(calendar || {}).oauthClientSecret}
+                                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-500 hover:to-green-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center gap-2 transition-all"
+                                >
+                                    <span className="text-xl">🔗</span>
+                                    Google로 자동 연결하기
+                                </button>
+                                <p className="text-xs text-green-300 mt-2">
+                                    ✅ 버튼을 클릭하면 Google 인증 페이지로 이동합니다. 권한을 승인하면 자동으로 토큰이 저장됩니다!
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client Secret (일정 등록용)</label>
-                            <input
-                                type="password"
-                                value={(calendar || {}).oauthClientSecret || ''}
-                                onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientSecret: e.target.value })}
-                                className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
-                                placeholder="OAuth 2.0 Client Secret (예: GOCSPX-xxxxx)"
-                            />
-                        </div>
-                        <div>
+                        
+                        {/* 수동 입력 섹션 (기존 방식) */}
+                        <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
+                            <h4 className="text-sm font-bold text-yellow-400 mb-2">📝 수동 입력 (고급 사용자용)</h4>
+                            <p className="text-xs text-white/50 mb-3">
+                                OAuth 2.0 Playground에서 직접 토큰을 받아서 입력하는 방법입니다.
+                            </p>
+                            <div>
                             <label className="block text-sm text-white/60 mb-1">
                                 OAuth 2.0 Refresh Token (일정 등록용, 권장)
                                 <span className="text-green-400 ml-2">⭐ 자동 갱신 가능!</span>
@@ -2581,6 +2639,7 @@ export default function AdminPage() {
                                 - 영구적으로 사용하려면 Refresh Token을 사용하거나 Service Account를 설정하세요<br />
                                 - 토큰은 안전하게 보관하세요
                             </p>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm text-white/60 mb-1">API 키 (일정 조회용, 선택사항)</label>
