@@ -2818,13 +2818,28 @@ export default function AdminPage() {
             {/* Header */}
             <header className="border-b border-white/10 bg-black/30 px-6 py-4 flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-cyan-400">Admin Panel</h1>
-                <button
-                    onClick={() => router.push('/')}
-                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-white flex items-center gap-2 transition-colors"
-                >
-                    <Home className="w-4 h-4" />
-                    메인 포트폴리오로
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setShowErrorConsole(!showErrorConsole)}
+                        className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 transition-colors ${
+                            showErrorConsole 
+                                ? 'bg-red-600 hover:bg-red-500' 
+                                : errorLogs.length > 0 
+                                    ? 'bg-yellow-600 hover:bg-yellow-500' 
+                                    : 'bg-gray-600 hover:bg-gray-500'
+                        }`}
+                    >
+                        <Terminal className="w-4 h-4" />
+                        에러 로그 {errorLogs.length > 0 && `(${errorLogs.length})`}
+                    </button>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-white flex items-center gap-2 transition-colors"
+                    >
+                        <Home className="w-4 h-4" />
+                        메인 포트폴리오로
+                    </button>
+                </div>
             </header>
 
             <div className="flex flex-1 overflow-hidden">
@@ -3010,6 +3025,64 @@ export default function AdminPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Error Log Console */}
+            {showErrorConsole && (
+                <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-red-500/50 z-50">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex items-center justify-between p-4 border-b border-red-500/30">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-400" />
+                                <h3 className="text-lg font-bold text-red-400">에러 로그 콘솔</h3>
+                                <span className="text-sm text-white/60">({errorLogs.length}개)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setErrorLogs([])}
+                                    className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-white text-sm"
+                                >
+                                    로그 지우기
+                                </button>
+                                <button
+                                    onClick={() => setShowErrorConsole(false)}
+                                    className="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto p-4">
+                            {errorLogs.length === 0 ? (
+                                <div className="text-center text-white/60 py-8">
+                                    에러 로그가 없습니다.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {errorLogs.map((log, idx) => (
+                                        <div key={idx} className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <span className="text-xs text-red-400 font-mono">{log.timestamp}</span>
+                                                <span className="text-xs text-white/40">#{errorLogs.length - idx}</span>
+                                            </div>
+                                            <div className="text-white font-semibold mb-1">{log.message}</div>
+                                            {log.details && (
+                                                <details className="mt-2">
+                                                    <summary className="text-sm text-white/60 cursor-pointer hover:text-white/80">
+                                                        상세 정보 보기
+                                                    </summary>
+                                                    <pre className="mt-2 p-3 bg-black/50 rounded text-xs text-red-300 font-mono overflow-x-auto">
+                                                        {log.details}
+                                                    </pre>
+                                                </details>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     )
 }
