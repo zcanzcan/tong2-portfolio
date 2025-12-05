@@ -2415,6 +2415,16 @@ export default function AdminPage() {
                             <p className="text-sm text-white/70 mb-4">
                                 Google Cloud Console에서 Client ID와 Client Secret만 입력하면, 버튼 클릭 한 번으로 자동으로 토큰을 받아서 저장합니다!
                             </p>
+                            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-200">
+                                <strong className="text-blue-400">📖 Client ID와 Client Secret 찾는 방법:</strong><br />
+                                1. <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Google Cloud Console</a> 접속<br />
+                                2. 프로젝트 선택 → <strong>"API 및 서비스"</strong> → <strong>"사용자 인증 정보"</strong><br />
+                                3. <strong>"OAuth 2.0 클라이언트 ID"</strong> 클릭<br />
+                                4. <strong>"클라이언트 ID"</strong>와 <strong>"클라이언트 보안 비밀번호"</strong> 복사<br />
+                                5. 아래 입력 필드에 붙여넣기<br />
+                                <br />
+                                <strong className="text-yellow-400">💡 상세 가이드:</strong> <code className="text-xs">GOOGLE_OAUTH_SETUP.md</code> 파일 참고
+                            </div>
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client ID</label>
