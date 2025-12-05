@@ -1,0 +1,340 @@
+{
+  "profile": {
+    "name": "백성진(통이)",
+    "title": "AI 기반 프로덕트 빌더",
+    "bio": "10년 QA 전문가 | AI 기반 프로덕트 빌더\n\n저는 10년의 QA 전문 지식과 최첨단 AI 툴링을 결합하여 \n출시 위험을 제거하고 프로젝트 납품 속도를 높이는 데 특화되어 있습니다.\n\n저는 신속한 개발과 확고한 품질 사이의 격차를 해소하는 다재다능한 \n개발 가능 QA 전문가 입니다. 시스템 아키텍처 및 품질 보증에 대한 \n저의 10년 경력은 AI가 생성한 코드를 효과적으로 관리할 수 있게 해 주며, \n최종 제품이 단순 속도가 아닌, 배포 시점부터 견고하고 완벽함을 보장합니다.",
+    "image": "/uploads/_2_1764043557835.jpg",
+    "status": "채용 가능",
+    "roles": [
+      "풀스택 개발자",
+      "UI/UX 디자이너",
+      "오픈소스 기여자"
+    ],
+    "titleEn": "AI-powered product builder",
+    "bioEn": "10 Years of QA Expert | AI-Powered Product Builder\n\nI specialize in combining 10 years of QA expertise with cutting-edge AI tooling to eliminate release risks and accelerate project delivery.\n\nI am a versatile Development Enabled QA Specialist who bridges the gap between rapid development and robust quality. My 10 years of experience in system architecture and quality assurance allows me to effectively manage AI-generated code, ensuring that the final product is robust and complete from the moment it's deployed, not just fast.",
+    "statusEn": "Available for recruitment",
+    "nameEn": "Seong-jin Baek (Tong-i)"
+  },
+  "heroButtons": [
+    {
+      "text": "연락하기",
+      "icon": "Mail",
+      "url": "melli81@naver.com",
+      "variant": "primary",
+      "textEn": "E-mail"
+    },
+    {
+      "text": "이력서",
+      "icon": "Download",
+      "url": "/resume/resume_1764914068814.doc",
+      "variant": "outline",
+      "textEn": "resume",
+      "dropdownItems": [
+        {
+          "text": "기본 이력서",
+          "url": "/resume/resume_1764913600803.docx"
+        },
+        {
+          "text": "이력서_20251009",
+          "url": "/resume/resume_1764914068814.doc"
+        }
+      ]
+    },
+    {
+      "text": "커피챗 요청",
+      "icon": "Coffee",
+      "url": "https://open.kakao.com/o/goZ0xC3h",
+      "variant": "outline-amber",
+      "textEn": "Request a coffee chat"
+    }
+  ],
+  "socials": [
+    {
+      "id": "github",
+      "name": "GitHub",
+      "icon": "Github",
+      "url": "https://github.com/zcanzcan?tab=repositories",
+      "color": "hover:text-white"
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "icon": "Linkedin",
+      "url": "https://linkedin.com",
+      "color": "hover:text-blue-400"
+    },
+    {
+      "id": "threads",
+      "name": "Threads",
+      "icon": "AtSign",
+      "url": "https://www.threads.com/@tong2.writer",
+      "color": "hover:text-white"
+    },
+    {
+      "id": "blog",
+      "name": "Naver Blog",
+      "icon": "BookText",
+      "url": "https://blog.naver.com/melli81",
+      "color": "hover:text-green-500"
+    }
+  ],
+  "blog": {
+    "title": "상인의 꿈",
+    "description": "IT와 비즈니스 통찰을 AI 기반으로 설계하는 용상가의 지식 아카이브.",
+    "url": "https://blog.naver.com/melli81"
+  },
+  "experience": [
+    {
+      "id": 1,
+      "role": "QA엔지니어",
+      "company": "인코어드 테크놀로지",
+      "period": "2023년 8월 ~ 2025년 10월",
+      "color": "group-hover:text-cyan-400",
+      "roleEn": "QA Engineer",
+      "companyEn": "Encored Technology",
+      "periodEn": "August 2023 - October 2025"
+    },
+    {
+      "id": 2,
+      "role": "프론트엔드 개발자",
+      "company": "스타트업 스튜디오",
+      "period": "2020-2022",
+      "color": "group-hover:text-purple-400"
+    },
+    {
+      "id": 3,
+      "role": "UI/UX 디자이너",
+      "company": "크리에이티브 랩",
+      "period": "2018-2020",
+      "color": "group-hover:text-pink-400"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Next.js",
+      "icon": "Globe",
+      "color": "text-white"
+    },
+    {
+      "name": "타입스크립트",
+      "icon": "Terminal",
+      "color": "text-blue-400"
+    },
+    {
+      "name": "테일윈드",
+      "icon": "Layout",
+      "color": "text-cyan-300"
+    },
+    {
+      "name": "Node.js",
+      "icon": "Server",
+      "color": "text-green-400"
+    },
+    {
+      "name": "PostgreSQL",
+      "icon": "Database",
+      "color": "text-blue-300"
+    },
+    {
+      "name": "React Native",
+      "icon": "Smartphone",
+      "color": "text-purple-400"
+    },
+    {
+      "name": "시스템 설계",
+      "icon": "Layers",
+      "color": "text-orange-400"
+    },
+    {
+      "name": "AI 통합",
+      "icon": "Cpu",
+      "color": "text-pink-400"
+    },
+    {
+      "name": "clude",
+      "icon": "Database",
+      "color": "text-orange-500"
+    },
+    {
+      "name": "AI ",
+      "icon": "Smartphone",
+      "color": "text-pink-600"
+    },
+    {
+      "name": "커서",
+      "icon": "Code2",
+      "color": "text-green-500"
+    },
+    {
+      "name": "레플릿",
+      "icon": "GitBranch",
+      "color": "text-blue-600"
+    },
+    {
+      "name": "a",
+      "icon": "FileJson",
+      "color": "text-white"
+    },
+    {
+      "name": "b",
+      "icon": "Smartphone",
+      "color": "text-white"
+    },
+    {
+      "name": "c",
+      "icon": "Layers",
+      "color": "text-white"
+    },
+    {
+      "name": "d",
+      "icon": "Layout",
+      "color": "text-white"
+    },
+    {
+      "name": "e",
+      "icon": "Hash",
+      "color": "text-white"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "E-Commerce Platform",
+      "description": "Next.js와 Stripe를 이용한 풀스택 쇼핑몰",
+      "link": "https://github.com",
+      "tags": [
+        "Next.js",
+        "Stripe",
+        "Tailwind",
+        "cusor",
+        "window"
+      ],
+      "image": "/project1.png",
+      "titleEn": "E-Commerce Platform",
+      "descriptionEn": "Next.js와 Stripe를 이용한 풀스택 쇼핑몰"
+    },
+    {
+      "id": 2,
+      "title": "Task Management App",
+      "description": "실시간 협업이 가능한 프로젝트 관리 도구",
+      "link": "https://github.com",
+      "tags": [
+        "React",
+        "Firebase",
+        "Redux"
+      ],
+      "image": "/project2.png"
+    },
+    {
+      "id": 3,
+      "title": "AI Image Generator",
+      "description": "OpenAI API를 활용한 이미지 생성 서비스",
+      "link": "https://github.com",
+      "tags": [
+        "Python",
+        "FastAPI",
+        "React"
+      ],
+      "image": "/project3.png"
+    },
+    {
+      "id": 1764917188979,
+      "title": "aaa",
+      "description": "aaaa",
+      "image": "/uploads/bee_1764917391744.jpg",
+      "link": "",
+      "tags": [
+        "css",
+        "thml"
+      ],
+      "titleEn": "aaa",
+      "descriptionEn": "aaa"
+    }
+  ],
+  "certifications": [
+    {
+      "id": 1,
+      "name": "테스트",
+      "nameEn": "Information Processing Engineer",
+      "issuer": "한국산업인력공단",
+      "issuerEn": "Human Resources Development Service of Korea",
+      "date": "2020",
+      "url": ""
+    },
+    {
+      "id": 2,
+      "name": "AWS Certified Solutions Architect",
+      "nameEn": "AWS Certified Solutions Architect",
+      "issuer": "Amazon Web Services",
+      "issuerEn": "Amazon Web Services",
+      "date": "2021",
+      "url": ""
+    },
+    {
+      "id": 1764916788508,
+      "name": "aaaa",
+      "nameEn": "aaaa",
+      "issuer": "aaaa",
+      "issuerEn": "aaaa",
+      "date": "2022",
+      "url": ""
+    },
+    {
+      "id": 1764916974092,
+      "name": "bbbb",
+      "nameEn": "bbbb",
+      "issuer": "bbbb",
+      "issuerEn": "bbbb",
+      "date": "2023",
+      "url": ""
+    }
+  ],
+  "publications": [
+    {
+      "id": "pub1",
+      "tag": "대표 저서",
+      "title": "카톡보다 쉬운 홈페이지 만들기",
+      "description": "아이디어를 세상에 가장 빠르게 선보이는 법\n10년간 개발과 QA 품질보증을 겸하며 기술의 완벽성보다 사용자의 쉬운 활용을 가장 중요하게 생각했던 저자의 노하우를 정리하여 엮은 책입니다\n\n복잡한 기술의 진입 장벽을 AI가 해소합니다\n\nQA 엔지니어의 완벽주의 로드맵 막연한 코딩 지식이나 복잡한 설정에 갇힐 필요 없이 명쾌한 기획력으로 정제된 로드맵을 따라 곧바로 시작하세요\n\nAI 파트너와의 협업 이 책은 AI를 가장 효과적인 파트너로 활용하여 입문자도 쉽게 기획 디자인 구현 검증까지 모든 과정을 빠르게 끝내는 실전 방법을 제시합니다\n\n카톡보다 쉽게 만드는 내 홈페이지를 통해 주저하는 시간을 끝내고 당신의 아이디어를 가장 빠르고 확실하게 현실로 만드십시오",
+      "image": "/uploads/KakaoTalk_20251021_135005894_1764764432598.png",
+      "link": "#카톡보다쉬운홈페이지,#AI홈페이지제작,#전자책",
+      "titleEn": "Creating a website is easier than using KakaoTalk.",
+      "descriptionEn": "How to Bring Your Ideas to the World Fastest\nThis book compiles the author's expertise, having prioritized ease of use over technical perfection over 10 years of development and QA quality assurance.\n\nAI eliminates the barriers to entry for complex technologies.\n\nA QA Engineer's Perfectionist Roadmap: Get started right away with a refined roadmap based on clear planning, without being bogged down in vague coding knowledge or complex settings.\n\nCollaborating with AI Partners: This book presents practical methods for even beginners to quickly complete the entire process, from planning, design, implementation, and verification, by leveraging AI as the most effective partner.\n\nEliminate hesitation and bring your ideas to life with the fastest, most reliable results possible with this website, made easier than KakaoTalk.",
+      "tagEn": "",
+      "purchaseLinks": [
+        {
+          "name": "교보문고",
+          "url": "https://ebook-product.kyobobook.co.kr/dig/epd/ebook/E000012282214"
+        },
+        {
+          "name": "리디북",
+          "url": "https://ridibooks.com/webtoon/recommendation"
+        }
+      ]
+    },
+    {
+      "id": "pub_1764057246870",
+      "tag": "대표 저서",
+      "tagEn": "Featured Book",
+      "title": "테스트저서",
+      "titleEn": "테스트저서",
+      "description": "테스트저서",
+      "descriptionEn": "테스트저서",
+      "image": "/uploads/___-_______-019_1764057263849.png",
+      "link": "",
+      "purchaseLinks": [
+        {
+          "name": "리디북스",
+          "url": "https://ridibooks.com/webtoon/recommendation"
+        }
+      ]
+    }
+  ],
+  "calendar": {
+    "calendarId": "1fda3a586c34793850a168648de641a6f19ef23b1a278aba12fd53837f040a81@group.calendar.google.com",
+    "apiKey": "AIzaSyCnYiuPZ2BSSx88j7eJjQ-WkXV5aIiDQ8E",
+    "oauthClientId": "736669320223-b9n7eh1ub1hndg1j35fp9t70hcj5lgta.apps.googleusercontent.com",
+    "oauthClientSecret": "",
+    "accessToken": "",
+    "refreshToken": ""
+  }
+}

@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Enforce Dark Mode by default for this specific design request */
+  --background: oklch(0.10 0.02 260); /* Deep dark blue/black */
+  --foreground: oklch(0.98 0 0);
+  
+  --card: oklch(0.15 0.02 260); /* Slightly lighter than bg */
+  --card-foreground: oklch(0.98 0 0);
+  
+  --popover: oklch(0.15 0.02 260);
+  --popover-foreground: oklch(0.98 0 0);
+  
+  --primary: oklch(0.98 0 0);
+  --primary-foreground: oklch(0.10 0.02 260);
+  
+  --secondary: oklch(0.25 0.02 260);
+  --secondary-foreground: oklch(0.98 0 0);
+  
+  --muted: oklch(0.25 0.02 260);
+  --muted-foreground: oklch(0.70 0 0);
+  
+  --accent: oklch(0.25 0.02 260);
+  --accent-foreground: oklch(0.98 0 0);
+  
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  
+  --border: oklch(0.25 0.02 260);
+  --input: oklch(0.25 0.02 260);
+  --ring: oklch(0.70 0.15 200); /* Cyan-ish ring */
+  
+  --radius: 1rem;
+  
+  /* Neon Accents */
+  --neon-cyan: oklch(0.85 0.20 200);
+  --neon-purple: oklch(0.75 0.25 300);
+}
+
+/* Force dark mode styles even without the class if preferred, but we'll stick to variables */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Glassmorphism Utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--secondary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Add smooth scroll behavior for anchor navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure minimum touch targets on mobile */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
