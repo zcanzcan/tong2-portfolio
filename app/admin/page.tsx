@@ -60,13 +60,13 @@ export default function AdminPage() {
 
     useEffect(() => {
         fetchAllData()
-        
+
         // URL 파라미터에서 성공/실패 메시지 확인
         const params = new URLSearchParams(window.location.search)
         const success = params.get('success')
         const error = params.get('error')
         const message = params.get('message')
-        
+
         if (success === 'calendar_connected') {
             alert('✅ Google Calendar 연결이 완료되었습니다! 토큰이 자동으로 저장되었습니다.')
             // URL에서 파라미터 제거
@@ -77,7 +77,7 @@ export default function AdminPage() {
             const refreshToken = params.get('refreshToken')
             const clientId = params.get('clientId')
             const clientSecret = params.get('clientSecret')
-            
+
             if (accessToken || refreshToken) {
                 // 캘린더 상태 업데이트
                 setCalendar({
@@ -87,27 +87,27 @@ export default function AdminPage() {
                     accessToken: accessToken || calendar.accessToken,
                     refreshToken: refreshToken || calendar.refreshToken
                 })
-                
+
                 alert('✅ 토큰을 성공적으로 받았습니다!\n\n"캘린더 설정 저장" 버튼을 클릭하여 저장해주세요.')
             }
-            
+
             // URL에서 파라미터 제거
             window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
         } else if (error) {
             const errorMessage = message || '오류가 발생했습니다.'
             const details = params.get('details') || ''
             const stack = params.get('stack') || ''
-            
+
             // 에러 로그에 추가
             setErrorLogs(prev => [{
                 timestamp: new Date().toLocaleString('ko-KR'),
                 message: errorMessage,
                 details: details || stack || undefined
             }, ...prev])
-            
+
             // 콘솔 자동 열기
             setShowErrorConsole(true)
-            
+
             alert(`❌ ${errorMessage}${details ? '\n\n상세 정보는 에러 콘솔을 확인하세요.' : ''}`)
             // URL에서 파라미터 제거
             window.history.replaceState({}, '', window.location.pathname + (activeTab ? `?tab=${activeTab}` : ''))
@@ -677,15 +677,15 @@ export default function AdminPage() {
 
     const renderExperience = () => {
         const addExperience = () => {
-            setExperience([...experience, { 
-                id: Date.now(), 
-                role: '', 
+            setExperience([...experience, {
+                id: Date.now(),
+                role: '',
                 roleEn: '',
-                company: '', 
+                company: '',
                 companyEn: '',
-                period: '', 
+                period: '',
                 periodEn: '',
-                color: 'text-white' 
+                color: 'text-white'
             }])
         }
         const removeExperience = (idx: number) => {
@@ -1274,9 +1274,9 @@ export default function AdminPage() {
 
     const renderCertifications = () => {
         const addCertification = () => {
-            setCertifications([...certifications, { 
+            setCertifications([...certifications, {
                 id: Date.now(),
-                name: '', 
+                name: '',
                 nameEn: '',
                 issuer: '',
                 issuerEn: '',
@@ -1310,8 +1310,8 @@ export default function AdminPage() {
                             <div key={idx} className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-white/60 text-sm">자격증 #{idx + 1}</span>
-                                    <button 
-                                        onClick={() => removeCertification(idx)} 
+                                    <button
+                                        onClick={() => removeCertification(idx)}
                                         className="p-2 text-red-400 hover:bg-white/5 rounded"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -2449,23 +2449,37 @@ export default function AdminPage() {
                             </div>
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client ID</label>
+                                    <label className="block text-sm text-white/60 mb-1 flex items-center gap-2">
+                                        OAuth 2.0 Client ID
+                                        {(calendar?.oauthClientId) && (
+                                            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">
+                                                ✅ API 설정 완료
+                                            </span>
+                                        )}
+                                    </label>
                                     <input
                                         type="text"
                                         value={(calendar || {}).oauthClientId || ''}
                                         onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientId: e.target.value })}
                                         className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
-                                        placeholder="OAuth 2.0 Client ID (예: 736669320223-xxxxx.apps.googleusercontent.com)"
+                                        placeholder="OAuth 2.0 Client ID"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-white/60 mb-1">OAuth 2.0 Client Secret</label>
+                                    <label className="block text-sm text-white/60 mb-1 flex items-center gap-2">
+                                        OAuth 2.0 Client Secret
+                                        {(calendar?.oauthClientSecret) && (
+                                            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">
+                                                ✅ API 설정 완료
+                                            </span>
+                                        )}
+                                    </label>
                                     <input
                                         type="password"
                                         value={(calendar || {}).oauthClientSecret || ''}
                                         onChange={(e) => setCalendar({ ...(calendar || {}), oauthClientSecret: e.target.value })}
                                         className="w-full bg-black/20 border border-white/10 rounded p-2 text-white"
-                                        placeholder="OAuth 2.0 Client Secret (예: GOCSPX-xxxxx)"
+                                        placeholder="OAuth 2.0 Client Secret"
                                     />
                                 </div>
                                 {/* 현재 사용되는 Redirect URI 표시 */}
@@ -2482,12 +2496,12 @@ export default function AdminPage() {
                                     onClick={async () => {
                                         const clientId = (calendar || {}).oauthClientId
                                         const clientSecret = (calendar || {}).oauthClientSecret
-                                        
+
                                         if (!clientId || !clientSecret) {
                                             alert('❌ Client ID와 Client Secret을 먼저 입력해주세요.')
                                             return
                                         }
-                                        
+
                                         // Google 인증 페이지로 리다이렉트
                                         const authUrl = `/api/calendar/auth?clientId=${encodeURIComponent(clientId)}&clientSecret=${encodeURIComponent(clientSecret)}`
                                         window.location.href = authUrl
@@ -2503,7 +2517,7 @@ export default function AdminPage() {
                                 </p>
                             </div>
                         </div>
-                        
+
                         {/* 수동 입력 섹션 (기존 방식) */}
                         <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
                             <h4 className="text-sm font-bold text-yellow-400 mb-2">📝 수동 입력 (고급 사용자용)</h4>
@@ -2511,193 +2525,203 @@ export default function AdminPage() {
                                 OAuth 2.0 Playground에서 직접 토큰을 받아서 입력하는 방법입니다.
                             </p>
                             <div>
-                            <label className="block text-sm text-white/60 mb-1">
-                                OAuth 2.0 Refresh Token (일정 등록용, 권장)
-                                <span className="text-green-400 ml-2">⭐ 자동 갱신 가능!</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={(calendar || {}).refreshToken || ''}
-                                onChange={(e) => setCalendar({ ...(calendar || {}), refreshToken: e.target.value })}
-                                className="w-full bg-black/20 border-2 border-green-500/50 rounded p-2 text-white focus:border-green-400"
-                                placeholder="OAuth 2.0 Playground에서 받은 Refresh token을 여기에 붙여넣으세요"
-                            />
-                            <p className="text-xs text-green-300 mt-1">
-                                ✅ Refresh Token을 입력하면 액세스 토큰이 만료되어도 자동으로 갱신됩니다! (권장)
-                            </p>
-                            <p className="text-xs text-white/50 mt-1">
-                                💡 OAuth 2.0 Playground의 Step 2에서 생성된 "Refresh token"을 복사하여 위에 붙여넣으세요
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm text-white/60 mb-1">
-                                OAuth 2.0 액세스 토큰 (일정 등록용, 선택사항)
-                                <span className="text-yellow-400 ml-2">Refresh Token이 없을 때만 사용</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={(calendar || {}).accessToken || ''}
-                                onChange={(e) => setCalendar({ ...(calendar || {}), accessToken: e.target.value })}
-                                className="w-full bg-black/20 border border-yellow-500/30 rounded p-2 text-white"
-                                placeholder="OAuth 2.0 Playground에서 받은 Access token (Refresh Token이 있으면 자동 갱신됨)"
-                            />
-                            <p className="text-xs text-yellow-300 mt-1">
-                                ⚠️ 액세스 토큰은 1시간 후 만료됩니다. Refresh Token을 사용하는 것을 권장합니다.
-                            </p>
-                            <div className="mt-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-200">
-                                <strong className="text-yellow-400">⚠️ invalid_scope 오류 해결 방법:</strong><br />
-                                <br />
-                                <strong className="text-green-400">✅ "OAuth 2.0 configuration" 패널이 열려있네요!</strong><br />
-                                <br />
-                                <strong className="text-cyan-400">이제 해야 할 일:</strong><br />
-                                1. 오른쪽에 열린 <strong>"OAuth 2.0 configuration"</strong> 패널을 보세요<br />
-                                2. 패널을 <strong>아래로 스크롤</strong>하세요<br />
-                                3. 패널 하단 부분에서 다음을 찾으세요:<br />
-                                - <strong>"OAuth flow"</strong> 드롭다운<br />
-                                - <strong>"OAuth endpoints"</strong> 드롭다운<br />
-                                - <strong>"Authorization endpoint"</strong> 입력 필드<br />
-                                - <strong>"Token endpoint"</strong> 입력 필드<br />
-                                - <strong>"Access token location"</strong> 드롭다운<br />
-                                - <strong>"Access type"</strong> 드롭다운<br />
-                                - <strong>"Force prompt"</strong> 드롭다운<br />
-                                - <strong className="text-yellow-300">"Use your own OAuth credentials"</strong> ← 이 체크박스를 찾으세요!<br />
-                                4. <strong>"Use your own OAuth credentials"</strong> 체크박스에 체크하세요<br />
-                                5. 체크하면 <strong>"OAuth Client ID"</strong>와 <strong>"OAuth Client secret"</strong> 입력 필드가 나타납니다<br />
-                                6. Google Cloud Console에서 생성한 값들을 입력하세요<br />
-                                <br />
-                                <strong className="text-red-400">💡 여전히 보이지 않나요?</strong><br />
-                                - 패널을 <strong>맨 아래까지</strong> 스크롤해보세요<br />
-                                - 패널이 작게 보이면 브라우저 확대/축소를 조정해보세요<br />
-                                - "Close" 버튼 위에 있을 수 있습니다
+                                <label className="block text-sm text-white/60 mb-1 flex items-center gap-2">
+                                    OAuth 2.0 Refresh Token (일정 등록용, 권장)
+                                    {(calendar?.refreshToken) && (
+                                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">
+                                            ✅ API 설정 완료
+                                        </span>
+                                    )}
+                                    <span className="text-green-400 ml-2">⭐ 자동 갱신 가능!</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={(calendar || {}).refreshToken || ''}
+                                    onChange={(e) => setCalendar({ ...(calendar || {}), refreshToken: e.target.value })}
+                                    className="w-full bg-black/20 border-2 border-green-500/50 rounded p-2 text-white focus:border-green-400"
+                                    placeholder="OAuth 2.0 Playground에서 받은 Refresh token"
+                                />
+                                <p className="text-xs text-green-300 mt-1">
+                                    ✅ Refresh Token을 입력하면 액세스 토큰이 만료되어도 자동으로 갱신됩니다! (권장)
+                                </p>
+                                <p className="text-xs text-white/50 mt-1">
+                                    💡 OAuth 2.0 Playground의 Step 2에서 생성된 "Refresh token"을 복사하여 위에 붙여넣으세요
+                                </p>
                             </div>
-                            <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
-                                <strong className="text-green-400">✅ Google Calendar API가 이미 활성화되어 있습니다!</strong><br />
-                                <br />
-                                <strong className="text-yellow-400">이제 OAuth 2.0 Playground에서 토큰을 발급받으세요:</strong><br />
-                                <br />
-                                <strong className="text-cyan-400">Step 1: 스코프 직접 입력 (중요!)</strong><br />
-                                <strong className="text-red-400">⚠️ API 목록에서 검색하지 마세요!</strong><br />
-                                1. OAuth 2.0 Playground 왼쪽 패널로 이동<br />
-                                2. <strong>"Step 1 Select & authorize APIs"</strong> 섹션을 <strong>확장</strong>하세요 (▶ 클릭)<br />
-                                3. API 목록을 스크롤하여 <strong>"Input your own scopes"</strong> 입력 필드 찾기<br />
-                                (API 목록 아래에 있습니다)<br />
-                                4. 다음 스코프를 <strong>직접 입력</strong>하세요:<br />
-                                <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar</code><br />
-                                5. <strong>"Authorize APIs"</strong> 버튼 클릭<br />
-                                6. Google 계정 선택 및 권한 승인<br />
-                                7. 승인 후 <strong>"Authorization code"</strong>가 생성됩니다<br />
-                                <br />
-                                <strong className="text-cyan-400">Step 2: 토큰 교환</strong><br />
-                                1. <strong>"Step 2 Exchange authorization code for tokens"</strong> 섹션을 <strong>확장</strong>하세요 (▶ 클릭)<br />
-                                2. <strong>"Exchange authorization code for tokens"</strong> 버튼 클릭<br />
-                                3. <strong>"Access token"</strong> 필드에 토큰이 생성됩니다<br />
-                                4. <strong className="text-yellow-300">이 토큰을 복사하세요!</strong><br />
-                                <br />
-                                <strong className="text-red-400">❌ Step 3은 필요 없습니다!</strong><br />
-                                <strong className="text-white">→ Step 3 "Configure request to API"는 건너뛰셔도 됩니다</strong><br />
-                                <strong className="text-white">→ Step 2에서 받은 Access Token만 있으면 충분합니다</strong><br />
-                                <br />
-                                <strong className="text-yellow-400">📍 토큰 등록 위치:</strong><br />
-                                <strong className="text-white">→ 이 입력 필드 바로 위에 있는 "OAuth 2.0 액세스 토큰" 필드에 붙여넣으세요!</strong><br />
-                                <strong className="text-white">→ 그 다음 아래로 스크롤하여 "캘린더 설정 저장" 버튼을 클릭하세요!</strong><br />
-                                <br />
-                                <strong className="text-red-400">⚠️ "invalid_grant" 오류 해결:</strong><br />
-                                - <strong>Authorization code가 만료되었거나 이미 사용됨</strong><br />
-                                → Step 1을 다시 진행하세요<br />
-                                → "Authorize APIs" 버튼을 다시 클릭하여 새로운 Authorization code 받기<br />
-                                → 새로 받은 code로 Step 2 다시 시도<br />
-                                - <strong>OAuth Client ID/Secret이 잘못됨</strong><br />
-                                → 오른쪽 "OAuth 2.0 configuration" 패널에서 Client ID와 Secret 확인<br />
-                                → Google Cloud Console에서 생성한 값과 정확히 일치하는지 확인<br />
-                                - <strong>Redirect URI 불일치</strong><br />
-                                → Google Cloud Console에서 OAuth Client ID 설정 확인<br />
-                                → 승인된 리디렉션 URI에 <code className="text-xs">https://developers.google.com/oauthplayground</code> 추가<br />
-                                - <strong>스코프 문제</strong><br />
-                                → Step 1에서 스코프를 정확히 입력했는지 확인<br />
-                                → 공백 없이 <code className="text-xs">https://www.googleapis.com/auth/calendar</code> 입력<br />
-                            </div>
-                            <p className="text-xs text-white/40 mt-2 space-y-1">
-                                <strong className="text-white/60">토큰 발급 방법 (단계별):</strong><br />
-                                <br />
-                                <strong className="text-yellow-400">1단계: OAuth 2.0 Playground 설정</strong><br />
-                                <strong className="text-green-400">✅ "OAuth 2.0 configuration" 패널이 이미 열려있습니다!</strong><br />
-                                <br />
-                                <strong className="text-cyan-400">이제 해야 할 일:</strong><br />
-                                1. 오른쪽에 열린 <strong>"OAuth 2.0 configuration"</strong> 패널을 확인하세요<br />
-                                2. 패널 내용을 <strong>아래로 스크롤</strong>하세요<br />
-                                3. 패널에서 다음 항목들을 순서대로 찾으세요:<br />
-                                - OAuth flow (드롭다운)<br />
-                                - OAuth endpoints (드롭다운)<br />
-                                - Authorization endpoint (입력 필드)<br />
-                                - Token endpoint (입력 필드)<br />
-                                - Access token location (드롭다운)<br />
-                                - Access type (드롭다운)<br />
-                                - Force prompt (드롭다운)<br />
-                                - <strong className="text-yellow-300">"Use your own OAuth credentials"</strong> ← 이 체크박스!<br />
-                                4. <strong>"Use your own OAuth credentials"</strong> 체크박스를 찾아서 체크하세요<br />
-                                (체크박스는 패널의 하단 부분, "Close" 버튼 바로 위에 있습니다)<br />
-                                5. 체크하면 바로 아래에 입력 필드 2개가 나타납니다:<br />
-                                - <strong>"OAuth Client ID"</strong> 입력 필드<br />
-                                - <strong>"OAuth Client secret"</strong> 입력 필드<br />
-                                6. Google Cloud Console에서 생성한 값들을 입력하세요<br />
-                                <br />
-                                <strong className="text-red-400">💡 여전히 보이지 않나요?</strong><br />
-                                - 패널을 <strong>맨 아래까지</strong> 스크롤해보세요 (스크롤바가 있을 수 있습니다)<br />
-                                - "Close" 버튼을 찾으세요 - 체크박스는 그 바로 위에 있습니다<br />
-                                - 브라우저 확대/축소를 조정해보세요 (Ctrl + 마우스 휠)<br />
-                                - 패널이 작게 보이면 브라우저 창을 넓혀보세요
-                                <br />
-                                <strong className="text-yellow-400">2단계: OAuth Client ID 생성 (처음 한 번만)</strong><br />
-                                1. <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Google Cloud Console</a> 접속<br />
-                                2. 프로젝트 선택 또는 생성<br />
-                                3. <strong>"API 및 서비스" → "사용자 인증 정보"</strong><br />
-                                4. <strong>"사용자 인증 정보 만들기" → "OAuth 클라이언트 ID"</strong><br />
-                                5. 애플리케이션 유형: <strong>"웹 애플리케이션"</strong> 선택<br />
-                                6. 승인된 리디렉션 URI에 추가:<br />
-                                <code className="text-xs text-cyan-300 block p-1 bg-black/40 rounded mt-1">https://developers.google.com/oauthplayground</code><br />
-                                7. 생성 후 <strong>클라이언트 ID</strong>와 <strong>클라이언트 보안 비밀</strong> 복사<br />
-                                <br />
-                                <strong className="text-yellow-400">3단계: Google Cloud Console에서 Calendar API 활성화 (필수!)</strong><br />
-                                <strong className="text-red-400">⚠️ 이 단계를 먼저 해야 합니다!</strong><br />
-                                1. <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Google Calendar API 활성화 페이지</a>로 이동<br />
-                                2. 프로젝트 선택 (OAuth Client ID를 만든 프로젝트와 동일한 프로젝트)<br />
-                                3. <strong>"사용 설정"</strong> 또는 <strong>"Enable"</strong> 버튼 클릭<br />
-                                4. API가 활성화될 때까지 대기 (몇 초 소요)<br />
-                                <br />
-                                <strong className="text-yellow-400">4단계: 토큰 발급</strong><br />
-                                <strong className="text-red-400">⚠️ Calendar API가 활성화되어 있어야 합니다!</strong><br />
-                                1. OAuth 2.0 Playground로 돌아가기<br />
-                                2. 왼쪽 패널에서 <strong>"Input your own scopes"</strong> 입력 필드 찾기<br />
-                                (API 목록 아래에 있습니다)<br />
-                                3. 다음 스코프를 <strong>직접 입력</strong>하세요:<br />
-                                <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar</code><br />
-                                또는<br />
-                                <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar.events</code><br />
-                                4. <strong>"Authorize APIs"</strong> 버튼 클릭<br />
-                                5. Google 계정 선택 및 권한 승인<br />
-                                6. <strong>"Step 2"</strong>로 이동<br />
-                                7. <strong>"Exchange authorization code for tokens"</strong> 버튼 클릭<br />
-                                8. 생성된 <strong>"Access token"</strong> 복사하여 위에 입력<br />
-                                <br />
-                                <strong className="text-red-400">⚠️ 오류 해결:</strong><br />
-                                - <strong>"invalid_scope" 또는 "400 오류: invalid_scope"</strong> 오류:<br />
-                                → <strong>가장 중요:</strong> Google Cloud Console에서 <strong>Calendar API를 활성화</strong>해야 합니다!<br />
-                                → <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Calendar API 활성화 링크</a><br />
-                                → OAuth Client ID를 만든 프로젝트와 동일한 프로젝트를 선택하세요<br />
-                                → API 목록에서 검색하지 말고, <strong>"Input your own scopes"</strong> 필드에 직접 입력하세요<br />
-                                → 올바른 스코프: <code className="text-xs">https://www.googleapis.com/auth/calendar</code><br />
-                                - <strong>"Calendar 검색이 안 됨"</strong> 문제:<br />
-                                → API 목록에서 검색하지 마세요!<br />
-                                → <strong>"Input your own scopes"</strong> 입력 필드를 사용하세요<br />
-                                → 스코프를 직접 입력하면 됩니다<br />
-                                - <strong>"redirect_uri_mismatch"</strong> 오류: 리디렉션 URI가 일치하지 않습니다<br />
-                                - <strong>"access_denied"</strong> 오류: 권한을 승인하지 않았습니다<br />
-                                <br />
-                                <strong className="text-yellow-400">⚠️ 참고:</strong><br />
-                                - 액세스 토큰은 1시간 후 만료됩니다<br />
-                                - 영구적으로 사용하려면 Refresh Token을 사용하거나 Service Account를 설정하세요<br />
-                                - 토큰은 안전하게 보관하세요
-                            </p>
+                            <div>
+                                <label className="block text-sm text-white/60 mb-1 flex items-center gap-2">
+                                    OAuth 2.0 액세스 토큰 (일정 등록용, 선택사항)
+                                    {(calendar?.accessToken) && (
+                                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">
+                                            ✅ API 설정 완료
+                                        </span>
+                                    )}
+                                    <span className="text-yellow-400 ml-2">Refresh Token이 없을 때만 사용</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={(calendar || {}).accessToken || ''}
+                                    onChange={(e) => setCalendar({ ...(calendar || {}), accessToken: e.target.value })}
+                                    className="w-full bg-black/20 border border-yellow-500/30 rounded p-2 text-white"
+                                    placeholder="OAuth 2.0 Playground에서 받은 Access token (Refresh Token이 있으면 자동 갱신됨)"
+                                />
+                                <p className="text-xs text-yellow-300 mt-1">
+                                    ⚠️ 액세스 토큰은 1시간 후 만료됩니다. Refresh Token을 사용하는 것을 권장합니다.
+                                </p>
+                                <div className="mt-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-200">
+                                    <strong className="text-yellow-400">⚠️ invalid_scope 오류 해결 방법:</strong><br />
+                                    <br />
+                                    <strong className="text-green-400">✅ "OAuth 2.0 configuration" 패널이 열려있네요!</strong><br />
+                                    <br />
+                                    <strong className="text-cyan-400">이제 해야 할 일:</strong><br />
+                                    1. 오른쪽에 열린 <strong>"OAuth 2.0 configuration"</strong> 패널을 보세요<br />
+                                    2. 패널을 <strong>아래로 스크롤</strong>하세요<br />
+                                    3. 패널 하단 부분에서 다음을 찾으세요:<br />
+                                    - <strong>"OAuth flow"</strong> 드롭다운<br />
+                                    - <strong>"OAuth endpoints"</strong> 드롭다운<br />
+                                    - <strong>"Authorization endpoint"</strong> 입력 필드<br />
+                                    - <strong>"Token endpoint"</strong> 입력 필드<br />
+                                    - <strong>"Access token location"</strong> 드롭다운<br />
+                                    - <strong>"Access type"</strong> 드롭다운<br />
+                                    - <strong>"Force prompt"</strong> 드롭다운<br />
+                                    - <strong className="text-yellow-300">"Use your own OAuth credentials"</strong> ← 이 체크박스를 찾으세요!<br />
+                                    4. <strong>"Use your own OAuth credentials"</strong> 체크박스에 체크하세요<br />
+                                    5. 체크하면 <strong>"OAuth Client ID"</strong>와 <strong>"OAuth Client secret"</strong> 입력 필드가 나타납니다<br />
+                                    6. Google Cloud Console에서 생성한 값들을 입력하세요<br />
+                                    <br />
+                                    <strong className="text-red-400">💡 여전히 보이지 않나요?</strong><br />
+                                    - 패널을 <strong>맨 아래까지</strong> 스크롤해보세요<br />
+                                    - 패널이 작게 보이면 브라우저 확대/축소를 조정해보세요<br />
+                                    - "Close" 버튼 위에 있을 수 있습니다
+                                </div>
+                                <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded text-xs text-green-200">
+                                    <strong className="text-green-400">✅ Google Calendar API가 이미 활성화되어 있습니다!</strong><br />
+                                    <br />
+                                    <strong className="text-yellow-400">이제 OAuth 2.0 Playground에서 토큰을 발급받으세요:</strong><br />
+                                    <br />
+                                    <strong className="text-cyan-400">Step 1: 스코프 직접 입력 (중요!)</strong><br />
+                                    <strong className="text-red-400">⚠️ API 목록에서 검색하지 마세요!</strong><br />
+                                    1. OAuth 2.0 Playground 왼쪽 패널로 이동<br />
+                                    2. <strong>"Step 1 Select & authorize APIs"</strong> 섹션을 <strong>확장</strong>하세요 (▶ 클릭)<br />
+                                    3. API 목록을 스크롤하여 <strong>"Input your own scopes"</strong> 입력 필드 찾기<br />
+                                    (API 목록 아래에 있습니다)<br />
+                                    4. 다음 스코프를 <strong>직접 입력</strong>하세요:<br />
+                                    <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar</code><br />
+                                    5. <strong>"Authorize APIs"</strong> 버튼 클릭<br />
+                                    6. Google 계정 선택 및 권한 승인<br />
+                                    7. 승인 후 <strong>"Authorization code"</strong>가 생성됩니다<br />
+                                    <br />
+                                    <strong className="text-cyan-400">Step 2: 토큰 교환</strong><br />
+                                    1. <strong>"Step 2 Exchange authorization code for tokens"</strong> 섹션을 <strong>확장</strong>하세요 (▶ 클릭)<br />
+                                    2. <strong>"Exchange authorization code for tokens"</strong> 버튼 클릭<br />
+                                    3. <strong>"Access token"</strong> 필드에 토큰이 생성됩니다<br />
+                                    4. <strong className="text-yellow-300">이 토큰을 복사하세요!</strong><br />
+                                    <br />
+                                    <strong className="text-red-400">❌ Step 3은 필요 없습니다!</strong><br />
+                                    <strong className="text-white">→ Step 3 "Configure request to API"는 건너뛰셔도 됩니다</strong><br />
+                                    <strong className="text-white">→ Step 2에서 받은 Access Token만 있으면 충분합니다</strong><br />
+                                    <br />
+                                    <strong className="text-yellow-400">📍 토큰 등록 위치:</strong><br />
+                                    <strong className="text-white">→ 이 입력 필드 바로 위에 있는 "OAuth 2.0 액세스 토큰" 필드에 붙여넣으세요!</strong><br />
+                                    <strong className="text-white">→ 그 다음 아래로 스크롤하여 "캘린더 설정 저장" 버튼을 클릭하세요!</strong><br />
+                                    <br />
+                                    <strong className="text-red-400">⚠️ "invalid_grant" 오류 해결:</strong><br />
+                                    - <strong>Authorization code가 만료되었거나 이미 사용됨</strong><br />
+                                    → Step 1을 다시 진행하세요<br />
+                                    → "Authorize APIs" 버튼을 다시 클릭하여 새로운 Authorization code 받기<br />
+                                    → 새로 받은 code로 Step 2 다시 시도<br />
+                                    - <strong>OAuth Client ID/Secret이 잘못됨</strong><br />
+                                    → 오른쪽 "OAuth 2.0 configuration" 패널에서 Client ID와 Secret 확인<br />
+                                    → Google Cloud Console에서 생성한 값과 정확히 일치하는지 확인<br />
+                                    - <strong>Redirect URI 불일치</strong><br />
+                                    → Google Cloud Console에서 OAuth Client ID 설정 확인<br />
+                                    → 승인된 리디렉션 URI에 <code className="text-xs">https://developers.google.com/oauthplayground</code> 추가<br />
+                                    - <strong>스코프 문제</strong><br />
+                                    → Step 1에서 스코프를 정확히 입력했는지 확인<br />
+                                    → 공백 없이 <code className="text-xs">https://www.googleapis.com/auth/calendar</code> 입력<br />
+                                </div>
+                                <p className="text-xs text-white/40 mt-2 space-y-1">
+                                    <strong className="text-white/60">토큰 발급 방법 (단계별):</strong><br />
+                                    <br />
+                                    <strong className="text-yellow-400">1단계: OAuth 2.0 Playground 설정</strong><br />
+                                    <strong className="text-green-400">✅ "OAuth 2.0 configuration" 패널이 이미 열려있습니다!</strong><br />
+                                    <br />
+                                    <strong className="text-cyan-400">이제 해야 할 일:</strong><br />
+                                    1. 오른쪽에 열린 <strong>"OAuth 2.0 configuration"</strong> 패널을 확인하세요<br />
+                                    2. 패널 내용을 <strong>아래로 스크롤</strong>하세요<br />
+                                    3. 패널에서 다음 항목들을 순서대로 찾으세요:<br />
+                                    - OAuth flow (드롭다운)<br />
+                                    - OAuth endpoints (드롭다운)<br />
+                                    - Authorization endpoint (입력 필드)<br />
+                                    - Token endpoint (입력 필드)<br />
+                                    - Access token location (드롭다운)<br />
+                                    - Access type (드롭다운)<br />
+                                    - Force prompt (드롭다운)<br />
+                                    - <strong className="text-yellow-300">"Use your own OAuth credentials"</strong> ← 이 체크박스!<br />
+                                    4. <strong>"Use your own OAuth credentials"</strong> 체크박스를 찾아서 체크하세요<br />
+                                    (체크박스는 패널의 하단 부분, "Close" 버튼 바로 위에 있습니다)<br />
+                                    5. 체크하면 바로 아래에 입력 필드 2개가 나타납니다:<br />
+                                    - <strong>"OAuth Client ID"</strong> 입력 필드<br />
+                                    - <strong>"OAuth Client secret"</strong> 입력 필드<br />
+                                    6. Google Cloud Console에서 생성한 값들을 입력하세요<br />
+                                    <br />
+                                    <strong className="text-red-400">💡 여전히 보이지 않나요?</strong><br />
+                                    - 패널을 <strong>맨 아래까지</strong> 스크롤해보세요 (스크롤바가 있을 수 있습니다)<br />
+                                    - "Close" 버튼을 찾으세요 - 체크박스는 그 바로 위에 있습니다<br />
+                                    - 브라우저 확대/축소를 조정해보세요 (Ctrl + 마우스 휠)<br />
+                                    - 패널이 작게 보이면 브라우저 창을 넓혀보세요
+                                    <br />
+                                    <strong className="text-yellow-400">2단계: OAuth Client ID 생성 (처음 한 번만)</strong><br />
+                                    1. <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Google Cloud Console</a> 접속<br />
+                                    2. 프로젝트 선택 또는 생성<br />
+                                    3. <strong>"API 및 서비스" → "사용자 인증 정보"</strong><br />
+                                    4. <strong>"사용자 인증 정보 만들기" → "OAuth 클라이언트 ID"</strong><br />
+                                    5. 애플리케이션 유형: <strong>"웹 애플리케이션"</strong> 선택<br />
+                                    6. 승인된 리디렉션 URI에 추가:<br />
+                                    <code className="text-xs text-cyan-300 block p-1 bg-black/40 rounded mt-1">https://developers.google.com/oauthplayground</code><br />
+                                    7. 생성 후 <strong>클라이언트 ID</strong>와 <strong>클라이언트 보안 비밀</strong> 복사<br />
+                                    <br />
+                                    <strong className="text-yellow-400">3단계: Google Cloud Console에서 Calendar API 활성화 (필수!)</strong><br />
+                                    <strong className="text-red-400">⚠️ 이 단계를 먼저 해야 합니다!</strong><br />
+                                    1. <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Google Calendar API 활성화 페이지</a>로 이동<br />
+                                    2. 프로젝트 선택 (OAuth Client ID를 만든 프로젝트와 동일한 프로젝트)<br />
+                                    3. <strong>"사용 설정"</strong> 또는 <strong>"Enable"</strong> 버튼 클릭<br />
+                                    4. API가 활성화될 때까지 대기 (몇 초 소요)<br />
+                                    <br />
+                                    <strong className="text-yellow-400">4단계: 토큰 발급</strong><br />
+                                    <strong className="text-red-400">⚠️ Calendar API가 활성화되어 있어야 합니다!</strong><br />
+                                    1. OAuth 2.0 Playground로 돌아가기<br />
+                                    2. 왼쪽 패널에서 <strong>"Input your own scopes"</strong> 입력 필드 찾기<br />
+                                    (API 목록 아래에 있습니다)<br />
+                                    3. 다음 스코프를 <strong>직접 입력</strong>하세요:<br />
+                                    <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar</code><br />
+                                    또는<br />
+                                    <code className="text-xs text-cyan-300 block p-2 bg-black/40 rounded mt-1 break-all">https://www.googleapis.com/auth/calendar.events</code><br />
+                                    4. <strong>"Authorize APIs"</strong> 버튼 클릭<br />
+                                    5. Google 계정 선택 및 권한 승인<br />
+                                    6. <strong>"Step 2"</strong>로 이동<br />
+                                    7. <strong>"Exchange authorization code for tokens"</strong> 버튼 클릭<br />
+                                    8. 생성된 <strong>"Access token"</strong> 복사하여 위에 입력<br />
+                                    <br />
+                                    <strong className="text-red-400">⚠️ 오류 해결:</strong><br />
+                                    - <strong>"invalid_scope" 또는 "400 오류: invalid_scope"</strong> 오류:<br />
+                                    → <strong>가장 중요:</strong> Google Cloud Console에서 <strong>Calendar API를 활성화</strong>해야 합니다!<br />
+                                    → <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">Calendar API 활성화 링크</a><br />
+                                    → OAuth Client ID를 만든 프로젝트와 동일한 프로젝트를 선택하세요<br />
+                                    → API 목록에서 검색하지 말고, <strong>"Input your own scopes"</strong> 필드에 직접 입력하세요<br />
+                                    → 올바른 스코프: <code className="text-xs">https://www.googleapis.com/auth/calendar</code><br />
+                                    - <strong>"Calendar 검색이 안 됨"</strong> 문제:<br />
+                                    → API 목록에서 검색하지 마세요!<br />
+                                    → <strong>"Input your own scopes"</strong> 입력 필드를 사용하세요<br />
+                                    → 스코프를 직접 입력하면 됩니다<br />
+                                    - <strong>"redirect_uri_mismatch"</strong> 오류: 리디렉션 URI가 일치하지 않습니다<br />
+                                    - <strong>"access_denied"</strong> 오류: 권한을 승인하지 않았습니다<br />
+                                    <br />
+                                    <strong className="text-yellow-400">⚠️ 참고:</strong><br />
+                                    - 액세스 토큰은 1시간 후 만료됩니다<br />
+                                    - 영구적으로 사용하려면 Refresh Token을 사용하거나 Service Account를 설정하세요<br />
+                                    - 토큰은 안전하게 보관하세요
+                                </p>
                             </div>
                         </div>
                         <div>
@@ -2863,13 +2887,12 @@ export default function AdminPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowErrorConsole(!showErrorConsole)}
-                        className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 transition-colors ${
-                            showErrorConsole 
-                                ? 'bg-red-600 hover:bg-red-500' 
-                                : errorLogs.length > 0 
-                                    ? 'bg-yellow-600 hover:bg-yellow-500' 
-                                    : 'bg-gray-600 hover:bg-gray-500'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 transition-colors ${showErrorConsole
+                            ? 'bg-red-600 hover:bg-red-500'
+                            : errorLogs.length > 0
+                                ? 'bg-yellow-600 hover:bg-yellow-500'
+                                : 'bg-gray-600 hover:bg-gray-500'
+                            }`}
                     >
                         <Terminal className="w-4 h-4" />
                         에러 로그 {errorLogs.length > 0 && `(${errorLogs.length})`}
