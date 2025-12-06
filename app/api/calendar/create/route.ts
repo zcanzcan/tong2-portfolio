@@ -39,18 +39,23 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { 
-      calendarId, 
-      accessToken, 
+    let {
+      calendarId,
+      accessToken,
       refreshToken,
       oauthClientId,
       oauthClientSecret,
-      summary, 
-      description, 
-      startDateTime, 
-      endDateTime, 
-      location 
+      summary,
+      description,
+      startDateTime,
+      endDateTime,
+      location
     } = body
+
+    // Fallback to Environment Variables if not provided in body
+    if (!oauthClientId) oauthClientId = process.env.GOOGLE_CLIENT_ID
+    if (!oauthClientSecret) oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET
+    if (!refreshToken) refreshToken = process.env.GOOGLE_REFRESH_TOKEN
 
     if (!calendarId || !summary || !startDateTime) {
       return NextResponse.json(
@@ -74,7 +79,7 @@ export async function POST(request: Request) {
 
     if (!token) {
       return NextResponse.json(
-        { 
+        {
           error: 'OAuth 2.0 액세스 토큰이 필요합니다.',
           message: 'Google Calendar API로 일정을 생성하려면 OAuth 2.0 액세스 토큰 또는 Refresh Token이 필요합니다.',
           instructions: [
@@ -115,7 +120,7 @@ export async function POST(request: Request) {
 
     // Google Calendar API로 일정 생성
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/events`
-    
+
     console.log('[Calendar Create API] Creating event:', {
       calendarId: normalizedCalendarId,
       summary,
@@ -136,21 +141,21 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       console.error('[Calendar Create API] Error response:', responseData)
-      
+
       // 토큰 만료 또는 인증 오류 감지
       const errorMessage = responseData.error?.message || responseData.error || '알 수 없는 오류'
-      const isAuthError = response.status === 401 || 
-                         errorMessage.includes('invalid authentication') ||
-                         errorMessage.includes('invalid credentials') ||
-                         errorMessage.includes('Invalid Credentials') ||
-                         responseData.error?.code === 401
+      const isAuthError = response.status === 401 ||
+        errorMessage.includes('invalid authentication') ||
+        errorMessage.includes('invalid credentials') ||
+        errorMessage.includes('Invalid Credentials') ||
+        responseData.error?.code === 401
 
       if (isAuthError) {
         // Refresh Token이 있으면 자동 갱신 시도
         if (refreshToken && oauthClientId && oauthClientSecret) {
           console.log('[Calendar Create API] Access token expired, attempting to refresh...')
           const refreshed = await refreshAccessToken(refreshToken, oauthClientId, oauthClientSecret)
-          
+
           if (refreshed) {
             // 새 토큰으로 재시도
             console.log('[Calendar Create API] Retrying with refreshed token...')
@@ -186,10 +191,10 @@ export async function POST(request: Request) {
 
         // Refresh Token으로도 실패하거나 Refresh Token이 없는 경우
         return NextResponse.json(
-          { 
+          {
             error: '인증 실패',
             details: 'OAuth 2.0 액세스 토큰이 만료되었거나 유효하지 않습니다.',
-            message: refreshToken 
+            message: refreshToken
               ? 'Refresh Token으로 자동 갱신을 시도했지만 실패했습니다. Refresh Token이 유효한지 확인해주세요.'
               : '액세스 토큰은 보통 1시간 후 만료됩니다. Refresh Token을 설정하면 자동으로 갱신됩니다.',
             instructions: refreshToken ? [
@@ -212,7 +217,7 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json(
-        { 
+        {
           error: '일정 생성 실패',
           details: errorMessage,
           code: responseData.error?.code || response.status
@@ -239,7 +244,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[Calendar Create API] Error:', error)
     return NextResponse.json(
-      { 
+      {
         error: '일정 생성 중 오류가 발생했습니다',
         details: error instanceof Error ? error.message : '알 수 없는 오류'
       },
