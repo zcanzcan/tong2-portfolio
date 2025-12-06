@@ -39,43 +39,43 @@ export function GoogleCalendar() {
   const fetchMonthEvents = async (calId: string) => {
     console.log('[GoogleCalendar] ====== FETCH START ======')
     console.log('[GoogleCalendar] Calendar ID:', calId)
-    
+
     try {
       setLoading(true)
-      
+
       // Get API key from portfolio data if available
       console.log('[GoogleCalendar] Fetching portfolio data...')
       const portfolioRes = await fetch('/api/portfolio')
       const portfolioData = await portfolioRes.json()
       const apiKey = portfolioData?.calendar?.apiKey || ''
-      
+
       console.log('[GoogleCalendar] Portfolio data:', {
         hasCalendar: !!portfolioData?.calendar,
         hasCalendarId: !!portfolioData?.calendar?.calendarId,
         hasApiKey: !!apiKey,
         apiKeyLength: apiKey.length
       })
-      
+
       const url = `/api/calendar?calendarId=${encodeURIComponent(calId)}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ''}`
       console.log('[GoogleCalendar] ====== CALLING API ======')
       console.log('[GoogleCalendar] Request URL:', url.replace(apiKey, 'API_KEY_HIDDEN'))
-      
+
       const response = await fetch(url)
-      
+
       console.log('[GoogleCalendar] Response received:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok
       })
-      
+
       if (!response.ok) {
         console.error('[GoogleCalendar] HTTP Error:', response.status, response.statusText)
         const errorText = await response.text().catch(() => 'Unknown error')
         throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`)
       }
-      
+
       const data = await response.json()
-      
+
       console.log('[GoogleCalendar] API Response:', {
         eventsCount: data.events?.length || 0,
         error: data.error,
@@ -86,7 +86,7 @@ export function GoogleCalendar() {
         originalCalendarId: data.originalCalendarId,
         events: data.events?.slice(0, 3) // 처음 3개만 로깅
       })
-      
+
       // 디버깅 정보 표시
       if (data.error && data.calendarId) {
         console.warn('[GoogleCalendar] Debug Info:', {
@@ -96,7 +96,7 @@ export function GoogleCalendar() {
           suggestion: '캘린더 ID를 확인하거나 새 캘린더를 만들어보세요'
         })
       }
-      
+
       if (data.error) {
         console.error('[GoogleCalendar] API Error:', data.error)
         // 에러가 있어도 일정이 있으면 표시
@@ -129,10 +129,10 @@ export function GoogleCalendar() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleTimeString('ko-KR', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     })
   }
 
@@ -141,14 +141,14 @@ export function GoogleCalendar() {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    
+
     if (date.toDateString() === today.toDateString()) {
       return language === 'ko' ? '오늘' : 'Today'
     } else if (date.toDateString() === tomorrow.toDateString()) {
       return language === 'ko' ? '내일' : 'Tomorrow'
     } else {
-      return date.toLocaleDateString('ko-KR', { 
-        month: 'short', 
+      return date.toLocaleDateString('ko-KR', {
+        month: 'short',
         day: 'numeric',
         weekday: 'short'
       })
@@ -263,7 +263,7 @@ export function GoogleCalendar() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar max-h-[11rem]">
             {events.slice(0, 8).map((event, index) => (
               <div
                 key={index}

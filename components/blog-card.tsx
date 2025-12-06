@@ -39,21 +39,23 @@ export function BlogCard() {
             spotlightColor="rgba(34, 197, 94, 0.15)"
         >
             <div className="flex flex-col h-full justify-between">
-                <div>
-                    <div className="flex items-center gap-2 mb-4">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                    <div className="flex items-center gap-2 mb-3 shrink-0">
                         <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
                             <BookText className="w-5 h-5" />
                         </div>
                         <span className="text-sm font-medium text-green-400">Tech Blog</span>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors">
-                        {blog.title}
-                    </h3>
+                    <div className="overflow-y-auto pr-2 custom-scrollbar max-h-[8rem]">
+                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors">
+                            {blog.title}
+                        </h3>
 
-                    <p className="text-zinc-400 text-sm leading-relaxed line-clamp-2">
-                        {blog.description}
-                    </p>
+                        <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-line">
+                            {blog.description}
+                        </p>
+                    </div>
                 </div>
 
                 <Button
