@@ -2468,6 +2468,16 @@ export default function AdminPage() {
                                         placeholder="OAuth 2.0 Client Secret (예: GOCSPX-xxxxx)"
                                     />
                                 </div>
+                                {/* 현재 사용되는 Redirect URI 표시 */}
+                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs">
+                                    <p className="text-blue-300 font-semibold mb-1">📍 현재 사용되는 Redirect URI:</p>
+                                    <code className="text-blue-200 break-all">
+                                        {typeof window !== 'undefined' ? `${window.location.origin}/api/calendar/callback` : 'http://localhost:3000/api/calendar/callback'}
+                                    </code>
+                                    <p className="text-yellow-300 mt-2 text-xs">
+                                        ⚠️ 이 URI가 Google Cloud Console의 "승인된 리디렉션 URI"에 정확히 등록되어 있어야 합니다!
+                                    </p>
+                                </div>
                                 <button
                                     onClick={async () => {
                                         const clientId = (calendar || {}).oauthClientId

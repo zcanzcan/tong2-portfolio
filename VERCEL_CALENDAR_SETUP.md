@@ -72,25 +72,65 @@ Vercel 배포 후 Admin 페이지에서는:
 **원인**: Google Cloud Console에 등록된 리디렉션 URI와 실제 요청 URI가 일치하지 않음
 
 **해결 방법**:
-1. Google Cloud Console → 사용자 인증 정보 → OAuth 클라이언트 ID 클릭
-2. **"승인된 리디렉션 URI"** 확인
-3. 다음 URI가 정확히 등록되어 있는지 확인:
+
+#### 1단계: 현재 사용 중인 Redirect URI 확인
+
+Admin 페이지에서 "Google로 자동 연결하기" 버튼을 클릭하기 전에, 브라우저 개발자 도구(F12)를 열고 **Console** 탭을 확인하세요. 서버 로그에 다음과 같은 정보가 표시됩니다:
+
+```
+[Calendar Auth API] Final redirectUri: http://localhost:3000/api/calendar/callback
+```
+
+이 URI가 **정확히** Google Cloud Console에 등록되어 있어야 합니다.
+
+#### 2단계: Google Cloud Console에서 URI 등록
+
+1. [Google Cloud Console](https://console.cloud.google.com/) 접속
+2. 프로젝트 선택 (또는 새로 생성)
+3. 좌측 메뉴에서 **"API 및 서비스"** → **"사용자 인증 정보"** 클릭
+4. OAuth 2.0 클라이언트 ID 목록에서 사용 중인 클라이언트 ID 클릭
+5. **"승인된 리디렉션 URI"** 섹션 확인
+6. 다음 URI들을 **정확히** 추가 (각각 한 줄씩):
+
+   **로컬 개발용:**
    ```
    http://localhost:3000/api/calendar/callback
    ```
-4. **포트 번호가 다르면** (예: 3001 사용 시):
+
+   **포트가 다르면 (예: 3001):**
    ```
    http://localhost:3001/api/calendar/callback
    ```
-   이렇게 정확히 등록해야 합니다.
-5. 등록 후 **저장** 클릭
-6. 브라우저 캐시를 지우고 다시 시도
 
-**⚠️ 중요**:
-- URI는 **대소문자 구분**합니다
-- **슬래시(`/`) 위치**가 정확해야 합니다
-- **포트 번호**가 정확해야 합니다
-- `http://`와 `https://`를 구분합니다
+   **Vercel 배포용 (실제 배포 URL 사용):**
+   ```
+   https://tong2-portfolio.vercel.app/api/calendar/callback
+   ```
+   또는
+   ```
+   https://your-custom-domain.com/api/calendar/callback
+   ```
+
+7. **"저장"** 버튼 클릭
+8. **5-10분 대기** (Google 서버에 반영되는데 시간이 걸림)
+
+#### 3단계: 다시 시도
+
+1. 브라우저 캐시 지우기 (`Ctrl + Shift + Delete`)
+2. 개발 서버 재시작 (`npm run dev`)
+3. Admin 페이지에서 다시 연결 시도
+
+**⚠️ 중요 체크리스트**:
+- ✅ URI는 **대소문자 구분**합니다 (`localhost`는 소문자)
+- ✅ **슬래시(`/`) 위치**가 정확해야 합니다 (`/api/calendar/callback`)
+- ✅ **포트 번호**가 정확해야 합니다 (`:3000`)
+- ✅ `http://`와 `https://`를 구분합니다 (로컬은 `http://`, 배포는 `https://`)
+- ✅ URI 끝에 **슬래시(`/`)가 없어야** 합니다 (`/callback` ✅, `/callback/` ❌)
+- ✅ Google Cloud Console 저장 후 **5-10분 대기** 필요
+
+**🔍 디버깅 팁**:
+- 브라우저 개발자 도구(F12) → Network 탭에서 OAuth 요청 확인
+- `redirect_uri` 파라미터 값을 확인하여 Google Cloud Console에 등록된 URI와 비교
 
 ### ❌ 로컬에서 500 에러 발생
 

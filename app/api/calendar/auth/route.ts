@@ -35,29 +35,29 @@ export async function GET(request: Request) {
     // 리다이렉트 URI 생성 (현재 도메인 기반)
     // request.url을 사용하여 정확한 현재 도메인 가져오기
     const url = new URL(request.url)
-    let baseUrl = url.origin
+    let baseUrl: string
     
     // 로컬 개발 환경 감지 및 처리
-    // localhost나 127.0.0.1인 경우 명시적으로 http://localhost:3000 사용
-    if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
-      // 포트 번호 추출 또는 기본값 사용
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      // 포트 번호 추출 (명시적으로 포트가 있으면 사용, 없으면 3000)
       const port = url.port || '3000'
       baseUrl = `http://localhost:${port}`
-    }
-    
-    // 환경 변수에서 포트 확인 (로컬 개발 시)
-    const envPort = process.env.PORT || process.env.NEXT_PUBLIC_PORT
-    if (envPort && baseUrl.includes('localhost')) {
-      baseUrl = `http://localhost:${envPort}`
+    } else {
+      // 프로덕션 환경 (Vercel 등)
+      baseUrl = url.origin
     }
     
     const redirectUri = `${baseUrl}/api/calendar/callback`
     
-    console.log('[Calendar Auth API] Base URL:', baseUrl)
-    console.log('[Calendar Auth API] Redirect URI:', redirectUri)
-    console.log('[Calendar Auth API] Original URL:', request.url)
-    console.log('[Calendar Auth API] Port from URL:', url.port)
-    console.log('[Calendar Auth API] Environment PORT:', process.env.PORT)
+    // 상세 로깅 (디버깅용)
+    console.log('[Calendar Auth API] ====== Redirect URI Generation ======')
+    console.log('[Calendar Auth API] Request URL:', request.url)
+    console.log('[Calendar Auth API] URL hostname:', url.hostname)
+    console.log('[Calendar Auth API] URL port:', url.port || '(default: 3000)')
+    console.log('[Calendar Auth API] URL origin:', url.origin)
+    console.log('[Calendar Auth API] Calculated baseUrl:', baseUrl)
+    console.log('[Calendar Auth API] Final redirectUri:', redirectUri)
+    console.log('[Calendar Auth API] ======================================')
 
     // Google OAuth 2.0 인증 URL 생성
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
