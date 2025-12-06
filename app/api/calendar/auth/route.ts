@@ -45,11 +45,19 @@ export async function GET(request: Request) {
       baseUrl = `http://localhost:${port}`
     }
     
+    // 환경 변수에서 포트 확인 (로컬 개발 시)
+    const envPort = process.env.PORT || process.env.NEXT_PUBLIC_PORT
+    if (envPort && baseUrl.includes('localhost')) {
+      baseUrl = `http://localhost:${envPort}`
+    }
+    
     const redirectUri = `${baseUrl}/api/calendar/callback`
     
     console.log('[Calendar Auth API] Base URL:', baseUrl)
     console.log('[Calendar Auth API] Redirect URI:', redirectUri)
     console.log('[Calendar Auth API] Original URL:', request.url)
+    console.log('[Calendar Auth API] Port from URL:', url.port)
+    console.log('[Calendar Auth API] Environment PORT:', process.env.PORT)
 
     // Google OAuth 2.0 인증 URL 생성
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
@@ -61,15 +69,19 @@ export async function GET(request: Request) {
     authUrl.searchParams.set('prompt', 'consent') // 항상 Refresh Token을 받기 위해 필요
     
     // State 생성 및 로깅
+    // State는 URL 인코딩이 필요하므로 encodeURIComponent 사용
     const stateData = { clientId, clientSecret, redirectBaseUrl: baseUrl }
     const stateJson = JSON.stringify(stateData)
+    const encodedState = encodeURIComponent(stateJson)
+    
     console.log('[Calendar Auth API] State data:', {
       clientIdLength: clientId.length,
       clientSecretLength: clientSecret.length,
       stateJsonLength: stateJson.length,
+      encodedStateLength: encodedState.length,
       stateJsonPreview: stateJson.substring(0, 100) + '...'
     })
-    authUrl.searchParams.set('state', stateJson) // 콜백에서 사용할 데이터
+    authUrl.searchParams.set('state', encodedState) // 콜백에서 사용할 데이터
 
     // 인증 URL로 리다이렉트
     return NextResponse.redirect(authUrl.toString())

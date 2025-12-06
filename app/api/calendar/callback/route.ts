@@ -52,12 +52,29 @@ export async function GET(request: Request) {
     }
 
     // 리다이렉트 URI 생성 (현재 요청 URL 기반으로 정확히 생성)
+    // State에서 받은 redirectBaseUrl을 우선 사용하되, 없으면 현재 URL 기반으로 생성
     const url = new URL(request.url)
-    const redirectUri = `${url.origin}/api/calendar/callback`
+    let redirectUri: string
+    
+    if (redirectBaseUrl) {
+      // State에서 받은 baseUrl 사용
+      redirectUri = `${redirectBaseUrl}/api/calendar/callback`
+    } else {
+      // 현재 요청 URL 기반으로 생성
+      let baseUrl = url.origin
+      // 로컬 개발 환경 처리
+      if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+        const port = url.port || '3000'
+        baseUrl = `http://localhost:${port}`
+      }
+      redirectUri = `${baseUrl}/api/calendar/callback`
+    }
     
     console.log('[Calendar Callback API] Current URL:', request.url)
     console.log('[Calendar Callback API] Redirect URI:', redirectUri)
     console.log('[Calendar Callback API] State redirectBaseUrl:', redirectBaseUrl)
+    console.log('[Calendar Callback API] URL origin:', url.origin)
+    console.log('[Calendar Callback API] URL port:', url.port)
 
     // 인증 코드를 토큰으로 교환
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
