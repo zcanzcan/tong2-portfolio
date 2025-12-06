@@ -182,3 +182,5 @@ Google Calendar 자동 연결 기능을 사용하기 위해 필요한 OAuth 2.0 
 - [Google Calendar API 문서](https://developers.google.com/calendar/api)
 - [OAuth 2.0 가이드](https://developers.google.com/identity/protocols/oauth2)
 
+
+

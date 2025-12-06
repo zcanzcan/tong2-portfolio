@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  
+
   // Vercel 환경 감지 (가장 먼저)
   const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_ENV || url.hostname.includes('vercel.app')
-  
+
   console.log('[Calendar Callback API] ====== CALLBACK START ======')
   console.log('[Calendar Callback API] Request URL:', request.url)
   console.log('[Calendar Callback API] Environment:', {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     hostname: url.hostname,
     NODE_ENV: process.env.NODE_ENV
   })
-  
+
   try {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
@@ -39,12 +39,18 @@ export async function GET(request: Request) {
     // 사용자가 인증을 거부한 경우
     if (error) {
       console.log('[Calendar Callback API] User denied access')
-      return NextResponse.redirect(`/admin?error=${encodeURIComponent(error)}&message=${encodeURIComponent('Google 인증이 취소되었습니다.')}`)
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', error)
+      redirectUrl.searchParams.set('message', 'Google 인증이 취소되었습니다.')
+      return NextResponse.redirect(redirectUrl)
     }
 
     if (!code || !state) {
       console.error('[Calendar Callback API] Missing required params')
-      return NextResponse.redirect('/admin?error=missing_params&message=' + encodeURIComponent('필수 파라미터가 없습니다.'))
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', 'missing_params')
+      redirectUrl.searchParams.set('message', '필수 파라미터가 없습니다.')
+      return NextResponse.redirect(redirectUrl)
     }
 
     // State에서 Client ID와 Secret 복원
@@ -55,12 +61,12 @@ export async function GET(request: Request) {
       // State는 URL 인코딩되어 있으므로 디코딩 필요
       const decodedState = decodeURIComponent(state)
       console.log('[Calendar Callback API] Decoded state:', decodedState.substring(0, 100) + '...')
-      
+
       const stateData = JSON.parse(decodedState)
       clientId = stateData.clientId
       clientSecret = stateData.clientSecret
       redirectBaseUrl = stateData.redirectBaseUrl || 'https://tong2-portfolio.vercel.app'
-      
+
       console.log('[Calendar Callback API] Parsed state data:', {
         hasClientId: !!clientId,
         hasClientSecret: !!clientSecret,
@@ -72,12 +78,15 @@ export async function GET(request: Request) {
       console.error('[Calendar Callback API] State parse error:', parseError)
       console.error('[Calendar Callback API] State value (raw):', state)
       console.error('[Calendar Callback API] State value (decoded):', decodeURIComponent(state))
-      return NextResponse.redirect('/admin?error=invalid_state&details=' + encodeURIComponent(`State 파싱 실패: ${parseError instanceof Error ? parseError.message : '알 수 없는 오류'}`))
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', 'invalid_state')
+      redirectUrl.searchParams.set('details', `State 파싱 실패: ${parseError instanceof Error ? parseError.message : '알 수 없는 오류'}`)
+      return NextResponse.redirect(redirectUrl)
     }
 
     // 리다이렉트 URI 생성 (State에서 받은 redirectBaseUrl 우선 사용)
     let redirectUri: string
-    
+
     if (redirectBaseUrl) {
       // State에서 받은 baseUrl 사용
       redirectUri = `${redirectBaseUrl}/api/calendar/callback`
@@ -91,7 +100,7 @@ export async function GET(request: Request) {
       }
       redirectUri = `${baseUrl}/api/calendar/callback`
     }
-    
+
     console.log('[Calendar Callback API] Redirect URI:', redirectUri)
     console.log('[Calendar Callback API] State redirectBaseUrl:', redirectBaseUrl)
     console.log('[Calendar Callback API] URL origin:', url.origin)
@@ -124,7 +133,11 @@ export async function GET(request: Request) {
         statusText: tokenResponse.statusText,
         error: errorData
       })
-      return NextResponse.redirect(`/admin?error=token_exchange_failed&details=${encodeURIComponent(JSON.stringify(errorData, null, 2))}`)
+
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', 'token_exchange_failed')
+      redirectUrl.searchParams.set('details', JSON.stringify(errorData, null, 2))
+      return NextResponse.redirect(redirectUrl)
     }
 
     const tokenData = await tokenResponse.json()
@@ -138,7 +151,10 @@ export async function GET(request: Request) {
 
     if (!refresh_token && !access_token) {
       console.error('[Calendar Callback API] No tokens received')
-      return NextResponse.redirect('/admin?error=no_tokens&message=' + encodeURIComponent('토큰을 받지 못했습니다.'))
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', 'no_tokens')
+      redirectUrl.searchParams.set('message', '토큰을 받지 못했습니다.')
+      return NextResponse.redirect(redirectUrl)
     }
 
     // 모든 환경에서 URL 파라미터로 토큰 전달
@@ -153,7 +169,10 @@ export async function GET(request: Request) {
       clientId: clientId,
       clientSecret: clientSecret
     })
-    const redirectUrl = `/admin?${tokenParams.toString()}&tab=calendar`
+    const redirectUrl = new URL('/admin', request.url)
+    tokenParams.forEach((value, key) => redirectUrl.searchParams.set(key, value))
+    redirectUrl.searchParams.set('tab', 'calendar')
+
     console.log('[Calendar Callback API] Redirecting to admin page')
     return NextResponse.redirect(redirectUrl)
   } catch (error) {
@@ -162,21 +181,26 @@ export async function GET(request: Request) {
     console.error('[Calendar Callback API] Error message:', error instanceof Error ? error.message : String(error))
     console.error('[Calendar Callback API] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     console.error('[Calendar Callback API] =============================')
-    
+
     const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
     const errorStack = error instanceof Error ? error.stack : ''
-    
+
     // 에러가 발생해도 리다이렉트는 성공해야 함
     try {
       const stackParam = errorStack ? `&stack=${encodeURIComponent(errorStack.substring(0, 500))}` : ''
-      const redirectUrl = `/admin?error=callback_error&details=${encodeURIComponent(errorMessage)}${stackParam}&tab=calendar`
+      const redirectUrl = new URL('/admin', request.url)
+      redirectUrl.searchParams.set('error', 'callback_error')
+      redirectUrl.searchParams.set('details', errorMessage)
+      redirectUrl.searchParams.set('stack', errorStack.substring(0, 500))
+      redirectUrl.searchParams.set('tab', 'calendar')
+
       console.log('[Calendar Callback API] Redirecting to error page')
       return NextResponse.redirect(redirectUrl)
     } catch (redirectError) {
       // 리다이렉트도 실패하면 JSON 응답
       console.error('[Calendar Callback API] Failed to redirect:', redirectError)
       return NextResponse.json(
-        { 
+        {
           error: '콜백 처리 중 오류가 발생했습니다',
           details: errorMessage,
           stack: errorStack?.substring(0, 500)
