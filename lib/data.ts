@@ -27,6 +27,9 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
             if (process.env.GOOGLE_CALENDAR_API_KEY) {
                 parsedData.calendar.apiKey = process.env.GOOGLE_CALENDAR_API_KEY;
             }
+            if (process.env.GOOGLE_CALENDAR_ID) {
+                parsedData.calendar.calendarId = process.env.GOOGLE_CALENDAR_ID;
+            }
 
             // Ensure client-side checks pass if we have a refresh token (server will handle rotation)
             if (parsedData.calendar.refreshToken && (!parsedData.calendar.accessToken || parsedData.calendar.accessToken === '')) {
