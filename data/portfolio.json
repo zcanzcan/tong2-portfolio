@@ -111,89 +111,64 @@
   ],
   "skills": [
     {
-      "name": "Next.js",
-      "icon": "Globe",
+      "name": "JAVA",
+      "icon": "Code2",
       "color": "text-white"
     },
     {
-      "name": "타입스크립트",
-      "icon": "Terminal",
+      "name": "C#",
+      "icon": "Code2",
       "color": "text-blue-400"
     },
     {
-      "name": "테일윈드",
-      "icon": "Layout",
+      "name": "Oracle",
+      "icon": "Database",
       "color": "text-cyan-300"
     },
     {
-      "name": "Node.js",
-      "icon": "Server",
+      "name": "MySQL",
+      "icon": "Database",
       "color": "text-green-400"
     },
     {
-      "name": "PostgreSQL",
-      "icon": "Database",
+      "name": "jmeter",
+      "icon": "Monitor",
       "color": "text-blue-300"
     },
     {
-      "name": "React Native",
-      "icon": "Smartphone",
+      "name": "Jira",
+      "icon": "Monitor",
       "color": "text-purple-400"
     },
     {
-      "name": "시스템 설계",
-      "icon": "Layers",
+      "name": "Jenkins",
+      "icon": "Monitor",
       "color": "text-orange-400"
     },
     {
-      "name": "AI 통합",
-      "icon": "Cpu",
+      "name": "v0.dev",
+      "icon": "Bot",
       "color": "text-pink-400"
     },
     {
-      "name": "clude",
-      "icon": "Database",
+      "name": "replit",
+      "icon": "Bot",
       "color": "text-orange-500"
     },
     {
-      "name": "AI ",
-      "icon": "Smartphone",
+      "name": "AI",
+      "icon": "Bot",
       "color": "text-pink-600"
     },
     {
-      "name": "커서",
-      "icon": "Code2",
-      "color": "text-green-500"
+      "name": "Cursor.ai",
+      "icon": "Bot",
+      "color": "text-green-400"
     },
     {
-      "name": "레플릿",
-      "icon": "GitBranch",
+      "name": "Antigravity",
+      "icon": "Bot",
       "color": "text-blue-600"
-    },
-    {
-      "name": "a",
-      "icon": "FileJson",
-      "color": "text-white"
-    },
-    {
-      "name": "b",
-      "icon": "Smartphone",
-      "color": "text-white"
-    },
-    {
-      "name": "c",
-      "icon": "Layers",
-      "color": "text-white"
-    },
-    {
-      "name": "d",
-      "icon": "Layout",
-      "color": "text-white"
-    },
-    {
-      "name": "e",
-      "icon": "Hash",
-      "color": "text-white"
     }
   ],
   "projects": [
@@ -332,7 +307,7 @@
   "calendar": {
     "calendarId": "1fda3a586c34793850a168648de641a6f19ef23b1a278aba12fd53837f040a81@group.calendar.google.com",
     "apiKey": "AIzaSyCnYiuPZ2BSSx88j7eJjQ-WkXV5aIiDQ8E",
-    "oauthClientId": "736669320223-b9n7eh1ub1hndg1j35fp9t70hcj5lgta.apps.googleusercontent.com",
+    "oauthClientId": "",
     "oauthClientSecret": "",
     "accessToken": "",
     "refreshToken": ""

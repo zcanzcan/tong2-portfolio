@@ -820,6 +820,10 @@ export default function AdminPage() {
         )
     }
 
+    // Popover States for Skills
+    const [openIconPopovers, setOpenIconPopovers] = useState<Record<number, boolean>>({})
+    const [openColorPopovers, setOpenColorPopovers] = useState<Record<number, boolean>>({})
+
     const renderSkills = () => {
         const addSkill = () => {
             setSkills([...skills, { name: '', icon: 'Circle', color: 'text-white' }])
@@ -855,7 +859,8 @@ export default function AdminPage() {
             'Coffee', 'Utensils', 'Wine', 'Beer', 'Cookie',
             'Heart', 'HeartHandshake', 'Smile', 'Laugh', 'Frown',
             'AlertCircle', 'AlertTriangle', 'Info', 'HelpCircle', 'CheckCircle',
-            'XCircle', 'Ban', 'ShieldAlert', 'ShieldCheck', 'ShieldOff'
+            'XCircle', 'Ban', 'ShieldAlert', 'ShieldCheck', 'ShieldOff',
+            'Bot', 'Sparkles'
         ]
 
         // 아이콘 한글 설명 매핑
@@ -1019,7 +1024,9 @@ export default function AdminPage() {
             'Ban': '금지',
             'ShieldAlert': '보안 경고',
             'ShieldCheck': '보안 확인',
-            'ShieldOff': '보안 해제'
+            'ShieldOff': '보안 해제',
+            'Bot': '봇/AI/자동화',
+            'Sparkles': 'AI/매직/반짝임'
         }
 
         return (
@@ -1094,7 +1101,10 @@ export default function AdminPage() {
                                         className="w-full bg-black/20 border border-white/10 rounded p-2 text-white text-sm"
                                     />
                                     <div className="flex gap-2 items-center">
-                                        <Popover>
+                                        <Popover
+                                            open={!!openIconPopovers[idx]}
+                                            onOpenChange={(open) => setOpenIconPopovers(prev => ({ ...prev, [idx]: open }))}
+                                        >
                                             <PopoverTrigger asChild>
                                                 <button className="w-1/2 bg-black/20 border border-white/10 rounded p-2 text-white text-xs flex items-center justify-between hover:bg-black/30">
                                                     <span className="flex items-center gap-2">
@@ -1118,6 +1128,7 @@ export default function AdminPage() {
                                                                                 const newSkills = [...skills]
                                                                                 newSkills[idx].icon = iconName
                                                                                 setSkills(newSkills)
+                                                                                setOpenIconPopovers(prev => ({ ...prev, [idx]: false }))
                                                                             }}
                                                                             className={`p-2 rounded border transition-colors flex flex-col items-center gap-1 ${skill.icon === iconName
                                                                                 ? 'bg-green-500/20 border-green-500/50'
@@ -1138,7 +1149,10 @@ export default function AdminPage() {
                                                 </TooltipProvider>
                                             </PopoverContent>
                                         </Popover>
-                                        <Popover>
+                                        <Popover
+                                            open={!!openColorPopovers[idx]}
+                                            onOpenChange={(open) => setOpenColorPopovers(prev => ({ ...prev, [idx]: open }))}
+                                        >
                                             <PopoverTrigger asChild>
                                                 <button className="w-1/2 bg-black/20 border border-white/10 rounded p-2 text-white text-xs flex items-center justify-between hover:bg-black/30">
                                                     <span className="flex items-center gap-2">
@@ -1225,6 +1239,7 @@ export default function AdminPage() {
                                                                             const newSkills = [...skills]
                                                                             newSkills[idx].color = colorClass
                                                                             setSkills(newSkills)
+                                                                            setOpenColorPopovers(prev => ({ ...prev, [idx]: false }))
                                                                         }}
                                                                         className={`w-6 h-6 rounded border-2 transition-all hover:scale-110 ${skill.color === colorClass
                                                                             ? 'border-white ring-2 ring-white/50'
