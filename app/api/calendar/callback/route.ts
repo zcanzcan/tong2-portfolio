@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { getPortfolioData, savePortfolioData } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
 
@@ -142,83 +141,21 @@ export async function GET(request: Request) {
       return NextResponse.redirect('/admin?error=no_tokens&message=' + encodeURIComponent('토큰을 받지 못했습니다.'))
     }
 
-    // Vercel 환경에서는 파일 저장이 불가능하므로 항상 URL 파라미터로 토큰 전달
-    if (isVercel) {
-      console.log('[Calendar Callback API] Vercel environment - returning tokens via URL params')
-      const tokenParams = new URLSearchParams({
-        success: 'tokens_received',
-        message: '토큰을 성공적으로 받았습니다. 아래 필드에 자동으로 입력되었으니 "캘린더 설정 저장" 버튼을 클릭해주세요.',
-        accessToken: access_token || '',
-        refreshToken: refresh_token || '',
-        clientId: clientId,
-        clientSecret: clientSecret
-      })
-      const redirectUrl = `/admin?${tokenParams.toString()}&tab=calendar`
-      console.log('[Calendar Callback API] Redirecting to:', redirectUrl.substring(0, 100) + '...')
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    // 로컬 개발 환경: 파일 시스템에 저장 시도
-    let portfolioData
-    try {
-      portfolioData = await getPortfolioData()
-      // 파일이 없거나 읽기 실패 시 빈 객체로 시작
-      if (!portfolioData) {
-        console.warn('[Calendar Callback API] Portfolio data not found, creating new structure')
-        portfolioData = { calendar: {} } as any
-      }
-    } catch (readError) {
-      console.error('[Calendar Callback API] Error reading portfolio data:', readError)
-      // 읽기 실패 시에도 토큰은 전달해야 하므로 빈 객체로 시작
-      portfolioData = { calendar: {} } as any
-    }
-
-    // 캘린더 설정 업데이트
-    if (!portfolioData.calendar) {
-      portfolioData.calendar = {}
-    }
-
-    portfolioData.calendar.oauthClientId = clientId
-    portfolioData.calendar.oauthClientSecret = clientSecret
-    if (access_token) {
-      portfolioData.calendar.accessToken = access_token
-    }
-    if (refresh_token) {
-      portfolioData.calendar.refreshToken = refresh_token
-    }
-
-    // 로컬 환경에서 파일 저장 시도
-    try {
-      const success = await savePortfolioData(portfolioData)
-      if (success) {
-        console.log('[Calendar Callback API] Tokens saved successfully to file')
-        return NextResponse.redirect('/admin?success=calendar_connected&tab=calendar')
-      } else {
-        console.warn('[Calendar Callback API] File save failed, returning tokens via URL params')
-        // 파일 저장 실패 시 URL 파라미터로 토큰 전달
-        const tokenParams = new URLSearchParams({
-          success: 'tokens_received',
-          message: '토큰을 성공적으로 받았습니다. 아래 필드에 자동으로 입력되었으니 "캘린더 설정 저장" 버튼을 클릭해주세요.',
-          accessToken: access_token || '',
-          refreshToken: refresh_token || '',
-          clientId: clientId,
-          clientSecret: clientSecret
-        })
-        return NextResponse.redirect(`/admin?${tokenParams.toString()}&tab=calendar`)
-      }
-    } catch (saveError) {
-      console.error('[Calendar Callback API] Error saving portfolio data:', saveError)
-      // 저장 실패해도 토큰은 전달해야 함
-      const tokenParams = new URLSearchParams({
-        success: 'tokens_received',
-        message: '토큰을 성공적으로 받았습니다. 아래 필드에 자동으로 입력되었으니 "캘린더 설정 저장" 버튼을 클릭해주세요.',
-        accessToken: access_token || '',
-        refreshToken: refresh_token || '',
-        clientId: clientId,
-        clientSecret: clientSecret
-      })
-      return NextResponse.redirect(`/admin?${tokenParams.toString()}&tab=calendar`)
-    }
+    // 모든 환경에서 URL 파라미터로 토큰 전달
+    // Vercel은 파일 시스템이 읽기 전용이고, 로컬에서도 안전하게 처리하기 위해
+    // 항상 Admin 페이지에서 수동 저장하도록 함
+    console.log('[Calendar Callback API] Returning tokens via URL params')
+    const tokenParams = new URLSearchParams({
+      success: 'tokens_received',
+      message: '토큰을 성공적으로 받았습니다. 아래 필드에 자동으로 입력되었으니 "캘린더 설정 저장" 버튼을 클릭해주세요.',
+      accessToken: access_token || '',
+      refreshToken: refresh_token || '',
+      clientId: clientId,
+      clientSecret: clientSecret
+    })
+    const redirectUrl = `/admin?${tokenParams.toString()}&tab=calendar`
+    console.log('[Calendar Callback API] Redirecting to admin page')
+    return NextResponse.redirect(redirectUrl)
   } catch (error) {
     console.error('[Calendar Callback API] ====== ERROR OCCURRED ======')
     console.error('[Calendar Callback API] Error type:', error?.constructor?.name)
