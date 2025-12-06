@@ -157,7 +157,7 @@ export default function AdminPage() {
         }
     }
 
-    const handleUpdate = async (section: string, data: any) => {
+    const handleUpdate = async (section: string, data: any, silent: boolean = false) => {
         try {
             console.log(`[Admin] Saving ${section}:`, data)
             const res = await fetch('/api/portfolio/update', {
@@ -169,7 +169,8 @@ export default function AdminPage() {
             if (res.ok) {
                 console.log(`[Admin] Save successful for ${section}`)
                 console.log(`[Admin] Saved data:`, JSON.stringify(data, null, 2))
-                alert('저장되었습니다!')
+                if (!silent) alert('저장되었습니다!')
+
                 // calendar 섹션의 경우 저장 후 불러오지 않음 (현재 상태 유지)
                 // 다른 섹션은 저장 후 다시 불러오기
                 if (section !== 'calendar') {
@@ -177,11 +178,11 @@ export default function AdminPage() {
                 }
             } else {
                 console.error(`[Admin] Save failed for ${section}:`, result)
-                alert(`저장 실패: ${result.error || '알 수 없는 오류'}`)
+                if (!silent) alert(`저장 실패: ${result.error || '알 수 없는 오류'}`)
             }
         } catch (error) {
             console.error('Update error:', error)
-            alert(`오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+            if (!silent) alert(`오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
         }
     }
 
@@ -2273,7 +2274,7 @@ export default function AdminPage() {
                                                 ...calendarData,
                                                 accessToken: data.newAccessToken
                                             }
-                                            await handleUpdate('calendar', updatedCalendar)
+                                            await handleUpdate('calendar', updatedCalendar, true)
                                             console.log('[Admin] Access token updated successfully')
                                         }
 
