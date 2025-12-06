@@ -10,6 +10,10 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
         const parsedData = JSON.parse(data) as PortfolioData;
 
         // Environment Variables Override (for Vercel)
+        if (!parsedData.calendar) {
+            parsedData.calendar = {};
+        }
+
         if (parsedData.calendar) {
             if (process.env.GOOGLE_REFRESH_TOKEN) {
                 parsedData.calendar.refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
