@@ -1359,12 +1359,46 @@ export default function AdminPage() {
                             <div key={idx} className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-white/60 text-sm">자격증 #{idx + 1}</span>
-                                    <button
-                                        onClick={() => removeCertification(idx)}
-                                        className="p-2 text-red-400 hover:bg-white/5 rounded"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (idx === 0) return
+                                                const newCerts = [...certifications]
+                                                const temp = newCerts[idx]
+                                                newCerts[idx] = newCerts[idx - 1]
+                                                newCerts[idx - 1] = temp
+                                                setCertifications(newCerts)
+                                            }}
+                                            disabled={idx === 0}
+                                            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="위로 이동"
+                                        >
+                                            <Icons.ArrowUp className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (idx === certifications.length - 1) return
+                                                const newCerts = [...certifications]
+                                                const temp = newCerts[idx]
+                                                newCerts[idx] = newCerts[idx + 1]
+                                                newCerts[idx + 1] = temp
+                                                setCertifications(newCerts)
+                                            }}
+                                            disabled={idx === certifications.length - 1}
+                                            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="아래로 이동"
+                                        >
+                                            <Icons.ArrowDown className="w-4 h-4" />
+                                        </button>
+                                        <div className="w-px bg-white/10 mx-1"></div>
+                                        <button
+                                            onClick={() => removeCertification(idx)}
+                                            className="p-2 text-red-400 hover:bg-white/5 rounded"
+                                            title="삭제"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

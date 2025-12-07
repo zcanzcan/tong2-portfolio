@@ -191,7 +191,7 @@ export function FeaturedPublication() {
 
       {/* Publication Preview Dialog */}
       <Dialog open={!!previewPublication} onOpenChange={(open) => !open && setPreviewPublication(null)}>
-        <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800">
+        <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-xl font-bold">도서 상세 정보</DialogTitle>
           </DialogHeader>
