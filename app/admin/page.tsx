@@ -805,9 +805,42 @@ export default function AdminPage() {
                                 />
                             </div>
                         </div>
-                        <button onClick={() => removeExperience(idx)} className="text-red-400 text-sm hover:underline flex items-center gap-1">
-                            <Trash2 className="w-3 h-3" /> 삭제
-                        </button>
+                        <div className="flex gap-2 justify-end bg-black/20 p-2 rounded-lg mt-2">
+                            <button
+                                onClick={() => {
+                                    if (idx === 0) return
+                                    const newExp = [...experience]
+                                    const temp = newExp[idx]
+                                    newExp[idx] = newExp[idx - 1]
+                                    newExp[idx - 1] = temp
+                                    setExperience(newExp)
+                                }}
+                                disabled={idx === 0}
+                                className="p-2 bg-white/5 hover:bg-white/10 rounded text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                title="위로 이동"
+                            >
+                                <Icons.ArrowUp className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (idx === experience.length - 1) return
+                                    const newExp = [...experience]
+                                    const temp = newExp[idx]
+                                    newExp[idx] = newExp[idx + 1]
+                                    newExp[idx + 1] = temp
+                                    setExperience(newExp)
+                                }}
+                                disabled={idx === experience.length - 1}
+                                className="p-2 bg-white/5 hover:bg-white/10 rounded text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                title="아래로 이동"
+                            >
+                                <Icons.ArrowDown className="w-4 h-4" />
+                            </button>
+                            <div className="w-px bg-white/10 mx-1"></div>
+                            <button onClick={() => removeExperience(idx)} className="text-red-400 text-sm hover:text-red-300 hover:bg-red-500/20 px-3 rounded transition-colors flex items-center gap-1">
+                                <Trash2 className="w-3 h-3" /> 삭제
+                            </button>
+                        </div>
                     </div>
                 ))}
                 <button
