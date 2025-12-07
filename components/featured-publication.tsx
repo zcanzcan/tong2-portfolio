@@ -97,9 +97,11 @@ export function FeaturedPublication() {
                   <Image
                     src={currentBook.image}
                     alt={currentBook.title}
-                    width={128}
-                    height={176}
+                    width={300}
+                    height={400}
+                    quality={100}
                     className="w-full h-full object-cover"
+                    priority
                   />
                 </div>
               ) : (
@@ -171,8 +173,9 @@ export function FeaturedPublication() {
                       <Image
                         src={book.image}
                         alt="thumbnail"
-                        width={48}
-                        height={64}
+                        width={100}
+                        height={140}
+                        quality={100}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -205,8 +208,9 @@ export function FeaturedPublication() {
                         <Image
                           src={previewPublication.image}
                           alt={previewPublication.title || 'Publication'}
-                          width={128}
-                          height={176}
+                          width={300}
+                          height={400}
+                          quality={100}
                           className="w-full h-full object-cover"
                         />
                       </div>
