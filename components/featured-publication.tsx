@@ -5,6 +5,7 @@ import { Book, ExternalLink, ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import { SpotlightCard } from "@/components/spotlight-card"
 import { Button } from "@/components/ui/button"
+import { StoreLogo, getStoreColor } from "@/components/store-logo"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useLanguage } from "@/contexts/language-context"
 
@@ -191,7 +192,7 @@ export function FeaturedPublication() {
 
       {/* Publication Preview Dialog */}
       <Dialog open={!!previewPublication} onOpenChange={(open) => !open && setPreviewPublication(null)}>
-        <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800 max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl sm:max-w-6xl bg-zinc-900 border-zinc-800 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-xl font-bold">도서 상세 정보</DialogTitle>
           </DialogHeader>
@@ -200,36 +201,36 @@ export function FeaturedPublication() {
               <div
                 className="relative overflow-hidden rounded-3xl glass-card p-6 duration-300 h-full border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50 transition-colors group"
               >
-                <div className="flex flex-col sm:flex-row items-center gap-6 h-full relative">
+                <div className="flex flex-col sm:flex-row items-center gap-10 h-full relative">
                   {/* 3D Book Cover */}
                   <div className="relative shrink-0 group-hover:scale-105 transition-transform duration-500">
                     {previewPublication.image ? (
-                      <div className="w-32 h-44 rounded-r-md rounded-l-sm shadow-2xl overflow-hidden relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
+                      <div className="w-72 h-[27rem] rounded-r-md rounded-l-sm shadow-2xl overflow-hidden relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
                         <Image
                           src={previewPublication.image}
                           alt={previewPublication.title || 'Publication'}
-                          width={300}
-                          height={400}
+                          width={600}
+                          height={800}
                           quality={100}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     ) : (
-                      <div className="w-32 h-44 bg-gradient-to-br from-amber-400 to-orange-600 rounded-r-md rounded-l-sm shadow-2xl flex items-center justify-center relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
+                      <div className="w-72 h-[27rem] bg-gradient-to-br from-amber-400 to-orange-600 rounded-r-md rounded-l-sm shadow-2xl flex items-center justify-center relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
                         <div className="absolute inset-y-0 left-0 w-1 bg-white/20" />
-                        <div className="text-center p-2">
-                          <div className="text-[10px] font-bold text-amber-900 tracking-widest mb-1">
+                        <div className="text-center p-4">
+                          <div className="text-xs font-bold text-amber-900 tracking-widest mb-2">
                             {previewPublication.tag || "NEW BOOK"}
                           </div>
-                          <h3 className="text-white font-bold text-sm leading-tight whitespace-pre-line">
+                          <h3 className="text-white font-bold text-xl leading-tight whitespace-pre-line">
                             {previewPublication.title || '제목 없음'}
                           </h3>
                         </div>
                       </div>
                     )}
                     {/* Book Pages Effect */}
-                    <div className="absolute top-1 right-2 w-32 h-42 bg-white/90 rounded-r-md z-0 transform translate-x-2 translate-y-1 shadow-md" />
-                    <div className="absolute top-2 right-4 w-32 h-40 bg-white/80 rounded-r-md -z-10 transform translate-x-4 translate-y-2 shadow-sm" />
+                    <div className="absolute top-1 right-2 w-72 h-[26rem] bg-white/90 rounded-r-md z-0 transform translate-x-2 translate-y-1 shadow-md" />
+                    <div className="absolute top-2 right-4 w-72 h-[25rem] bg-white/80 rounded-r-md -z-10 transform translate-x-4 translate-y-2 shadow-sm" />
                   </div>
 
                   <div className="flex flex-col justify-center text-center sm:text-left flex-1">
@@ -248,33 +249,48 @@ export function FeaturedPublication() {
                     </p>
 
                     {/* 구매 링크 버튼들 */}
+                    {/* 구매 링크 버튼들 - Store Grid Style */}
                     {(previewPublication.purchaseLinks && previewPublication.purchaseLinks.length > 0) ? (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {previewPublication.purchaseLinks.map((link: any, linkIdx: number) => (
-                          <a
-                            key={linkIdx}
-                            href={link.url || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 border border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400 text-zinc-300 rounded text-sm transition-colors"
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                            {link.name || '구매하기'}
-                            <ExternalLink className="w-3 h-3 opacity-50" />
-                          </a>
-                        ))}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pt-4 border-t border-white/5">
+                        {previewPublication.purchaseLinks.map((link: any, linkIdx: number) => {
+                          return (
+                            <a
+                              key={linkIdx}
+                              href={link.url || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 px-4 py-4 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/20 hover:border-amber-500/50 text-zinc-200 rounded-xl transition-all group/btn"
+                            >
+                              <div className={`p-2 rounded-lg ${getStoreColor(link.name)}/10 text-white group-hover/btn:${getStoreColor(link.name)} transition-colors`}>
+                                <StoreLogo store={link.name || ''} className="w-5 h-5" />
+                              </div>
+                              <div className="flex flex-col text-left">
+                                <span className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Buy at</span>
+                                <span className="font-bold text-amber-100 group-hover/btn:text-white">{link.name || '구매하기'}</span>
+                              </div>
+                              <ExternalLink className="w-4 h-4 ml-auto opacity-30 group-hover/btn:opacity-100 transition-opacity" />
+                            </a>
+                          )
+                        })}
                       </div>
                     ) : previewPublication.link && !previewPublication.link.startsWith('#') ? (
-                      <a
-                        href={previewPublication.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400 text-zinc-300 rounded text-sm transition-colors"
-                      >
-                        <Book className="w-4 h-4" />
-                        미리보기
-                        <ExternalLink className="w-3 h-3 opacity-50" />
-                      </a>
+                      <div className="mt-auto pt-4 border-t border-white/5">
+                        <a
+                          href={previewPublication.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 px-4 py-4 border border-green-500/20 bg-green-500/5 hover:bg-green-500/20 hover:border-green-500/50 text-zinc-200 rounded-xl transition-all group/btn w-full sm:w-1/2"
+                        >
+                          <div className="p-2 rounded-lg bg-green-500/10 text-green-500 group-hover/btn:bg-green-500 group-hover/btn:text-white transition-colors">
+                            <Book className="w-5 h-5" />
+                          </div>
+                          <div className="flex flex-col text-left">
+                            <span className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Preview</span>
+                            <span className="font-bold text-green-100 group-hover/btn:text-white">미리보기</span>
+                          </div>
+                          <ExternalLink className="w-4 h-4 ml-auto opacity-30 group-hover/btn:opacity-100 transition-opacity" />
+                        </a>
+                      </div>
                     ) : null}
                   </div>
                 </div>

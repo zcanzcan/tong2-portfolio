@@ -12,6 +12,7 @@ import * as Icons from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { StoreLogo, getStoreColor } from '@/components/store-logo'
 import { SpotlightCard } from '@/components/spotlight-card'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -2011,27 +2012,58 @@ export default function AdminPage() {
                                     </div>
                                     <div className="space-y-2">
                                         {(pub.purchaseLinks || []).map((link: any, linkIdx: number) => (
-                                            <div key={linkIdx} className="flex gap-2 items-center">
-                                                <input
-                                                    type="text"
-                                                    placeholder="사이트명 (예: 교보문고)"
-                                                    value={link.name || ''}
-                                                    onChange={(e) => updatePurchaseLink(idx, linkIdx, 'name', e.target.value)}
-                                                    className="flex-1 bg-black/20 border border-white/10 rounded p-2 text-white text-sm"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    placeholder="구매 URL"
-                                                    value={link.url || ''}
-                                                    onChange={(e) => updatePurchaseLink(idx, linkIdx, 'url', e.target.value)}
-                                                    className="flex-1 bg-black/20 border border-white/10 rounded p-2 text-white text-sm"
-                                                />
-                                                <button
-                                                    onClick={() => removePurchaseLink(idx, linkIdx)}
-                                                    className="px-2 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
+                                            <div key={linkIdx} className="flex flex-col gap-2 p-3 bg-white/5 rounded-lg border border-white/10">
+                                                <div className="flex gap-2 items-start">
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex gap-2">
+                                                            {['kyobo', 'yes24', 'aladin', 'ridi'].map(store => {
+                                                                const storeNameMap: Record<string, string> = {
+                                                                    'kyobo': '교보문고',
+                                                                    'yes24': 'Yes24',
+                                                                    'aladin': '알라딘',
+                                                                    'ridi': '리디북스'
+                                                                }
+                                                                const targetName = storeNameMap[store]
+                                                                const isActive = link.name === targetName || link.name?.toLowerCase().includes(store === 'kyobo' ? '교보' : store === 'aladin' ? '알라딘' : store === 'ridi' ? '리디' : 'yes')
+
+                                                                return (
+                                                                    <button
+                                                                        key={store}
+                                                                        onClick={() => updatePurchaseLink(idx, linkIdx, 'name', targetName)}
+                                                                        className={`p-2 rounded transition-all flex items-center justify-center gap-1 ${isActive ? 'bg-amber-500/20 border-amber-500 text-white ring-1 ring-amber-500/50' : 'bg-black/20 border border-white/10 hover:bg-white/10 text-white/40 hover:text-white'}`}
+                                                                        title={targetName}
+                                                                    >
+                                                                        <StoreLogo store={store} className="w-4 h-4" />
+                                                                        <span className="text-xs hidden xl:inline">{targetName}</span>
+                                                                    </button>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="사이트명 (직접 입력 가능)"
+                                                                value={link.name || ''}
+                                                                onChange={(e) => updatePurchaseLink(idx, linkIdx, 'name', e.target.value)}
+                                                                className="w-1/3 bg-black/20 border border-white/10 rounded p-2 text-white text-sm"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="구매 URL (https://...)"
+                                                                value={link.url || ''}
+                                                                onChange={(e) => updatePurchaseLink(idx, linkIdx, 'url', e.target.value)}
+                                                                className="flex-1 bg-black/20 border border-white/10 rounded p-2 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removePurchaseLink(idx, linkIdx)}
+                                                        className="p-2 bg-red-600 hover:bg-red-500 rounded text-white h-full flex items-center justify-center"
+                                                        title="삭제"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                         {(!pub.purchaseLinks || pub.purchaseLinks.length === 0) && (
@@ -3083,94 +3115,114 @@ export default function AdminPage() {
 
             {/* Publication Preview Dialog */}
             <Dialog open={!!previewPublication} onOpenChange={(open) => !open && setPreviewPublication(null)}>
-                <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800">
+                <DialogContent className="max-w-6xl sm:max-w-6xl bg-zinc-900 border-zinc-800 max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-white text-xl font-bold">포트폴리오 미리보기</DialogTitle>
+                        <DialogTitle className="text-white text-xl font-bold">도서 상세 정보</DialogTitle>
                     </DialogHeader>
-                    <div className="mt-4">
-                        <SpotlightCard
-                            className="h-full border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50 transition-colors group"
-                            spotlightColor="rgba(245, 158, 11, 0.15)"
-                        >
-                            <div className="flex flex-col sm:flex-row items-center gap-6 h-full relative">
-                                {/* 3D Book Cover */}
-                                <div className="relative shrink-0 group-hover:scale-105 transition-transform duration-500">
-                                    {previewPublication?.image ? (
-                                        <div className="w-32 h-44 rounded-r-md rounded-l-sm shadow-2xl overflow-hidden relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
-                                            <Image
-                                                src={previewPublication.image}
-                                                alt={previewPublication.title || 'Publication'}
-                                                width={128}
-                                                height={176}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="w-32 h-44 bg-gradient-to-br from-amber-400 to-orange-600 rounded-r-md rounded-l-sm shadow-2xl flex items-center justify-center relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
-                                            <div className="absolute inset-y-0 left-0 w-1 bg-white/20" />
-                                            <div className="text-center p-2">
-                                                <div className="text-[10px] font-bold text-amber-900 tracking-widest mb-1">
-                                                    {previewPublication?.tag || "NEW BOOK"}
-                                                </div>
-                                                <h3 className="text-white font-bold text-sm leading-tight whitespace-pre-line">
-                                                    {previewPublication?.title || '제목 없음'}
-                                                </h3>
+                    {previewPublication ? (
+                        <div className="mt-4">
+                            <div
+                                className="relative overflow-hidden rounded-3xl glass-card p-6 duration-300 h-full border-amber-500/30 bg-amber-500/5 hover:border-amber-500/50 transition-colors group"
+                            >
+                                <div className="flex flex-col sm:flex-row items-center gap-10 h-full relative">
+                                    {/* 3D Book Cover */}
+                                    <div className="relative shrink-0 group-hover:scale-105 transition-transform duration-500">
+                                        {previewPublication.image ? (
+                                            <div className="w-72 h-[27rem] rounded-r-md rounded-l-sm shadow-2xl overflow-hidden relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
+                                                <Image
+                                                    src={previewPublication.image}
+                                                    alt={previewPublication.title || 'Publication'}
+                                                    width={600}
+                                                    height={800}
+                                                    quality={100}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
-                                        </div>
-                                    )}
-                                    {/* Book Pages Effect */}
-                                    <div className="absolute top-1 right-2 w-32 h-42 bg-white/90 rounded-r-md z-0 transform translate-x-2 translate-y-1 shadow-md" />
-                                    <div className="absolute top-2 right-4 w-32 h-40 bg-white/80 rounded-r-md -z-10 transform translate-x-4 translate-y-2 shadow-sm" />
-                                </div>
-
-                                <div className="flex flex-col justify-center text-center sm:text-left flex-1">
-                                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-                                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-medium border border-amber-500/30">
-                                            {previewPublication?.tag || "대표 저서"}
-                                        </span>
+                                        ) : (
+                                            <div className="w-72 h-[27rem] bg-gradient-to-br from-amber-400 to-orange-600 rounded-r-md rounded-l-sm shadow-2xl flex items-center justify-center relative z-10 transform perspective-1000 rotate-y-12 border-l-4 border-amber-800">
+                                                <div className="absolute inset-y-0 left-0 w-1 bg-white/20" />
+                                                <div className="text-center p-4">
+                                                    <div className="text-xs font-bold text-amber-900 tracking-widest mb-2">
+                                                        {previewPublication.tag || "NEW BOOK"}
+                                                    </div>
+                                                    <h3 className="text-white font-bold text-xl leading-tight whitespace-pre-line">
+                                                        {previewPublication.title || '제목 없음'}
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* Book Pages Effect */}
+                                        <div className="absolute top-1 right-2 w-72 h-[26rem] bg-white/90 rounded-r-md z-0 transform translate-x-2 translate-y-1 shadow-md" />
+                                        <div className="absolute top-2 right-4 w-72 h-[25rem] bg-white/80 rounded-r-md -z-10 transform translate-x-4 translate-y-2 shadow-sm" />
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
-                                        {previewPublication?.title || '(제목 없음)'}
-                                    </h3>
+                                    <div className="flex flex-col justify-center text-center sm:text-left flex-1">
+                                        <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+                                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-medium border border-amber-500/30">
+                                                {previewPublication.tag || "대표 저서"}
+                                            </span>
+                                        </div>
 
-                                    <p className="text-zinc-400 text-sm mb-4 leading-relaxed break-words whitespace-pre-line">
-                                        {previewPublication?.description || '(설명 없음)'}
-                                    </p>
+                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
+                                            {previewPublication.title || '(제목 없음)'}
+                                        </h3>
 
-                                    {/* 구매 링크 버튼들 */}
-                                    {(previewPublication?.purchaseLinks && previewPublication.purchaseLinks.length > 0) ? (
-                                        <div className="flex flex-wrap gap-2 mb-2">
-                                            {previewPublication.purchaseLinks.map((link: any, linkIdx: number) => (
+                                        <p className="text-zinc-400 text-sm mb-4 leading-relaxed break-words whitespace-pre-line">
+                                            {previewPublication.description || '(설명 없음)'}
+                                        </p>
+
+                                        {/* 구매 링크 버튼들 - Store Grid Style */}
+                                        {(previewPublication.purchaseLinks && previewPublication.purchaseLinks.length > 0) ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pt-4 border-t border-white/5">
+                                                {previewPublication.purchaseLinks.map((link: any, linkIdx: number) => {
+                                                    return (
+                                                        <a
+                                                            key={linkIdx}
+                                                            href={link.url || '#'}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-3 px-4 py-4 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/20 hover:border-amber-500/50 text-zinc-200 rounded-xl transition-all group/btn"
+                                                        >
+                                                            <div className={`p-2 rounded-lg ${getStoreColor(link.name)}/10 text-white group-hover/btn:${getStoreColor(link.name)} transition-colors`}>
+                                                                <StoreLogo store={link.name || ''} className="w-5 h-5" />
+                                                            </div>
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Buy at</span>
+                                                                <span className="font-bold text-amber-100 group-hover/btn:text-white">{link.name || '구매하기'}</span>
+                                                            </div>
+                                                            <ExternalLink className="w-4 h-4 ml-auto opacity-30 group-hover/btn:opacity-100 transition-opacity" />
+                                                        </a>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : previewPublication.link && !previewPublication.link.startsWith('#') ? (
+                                            <div className="mt-auto pt-4 border-t border-white/5">
                                                 <a
-                                                    key={linkIdx}
-                                                    href={link.url || '#'}
+                                                    href={previewPublication.link}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-2 px-4 py-2 border border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400 text-zinc-300 rounded text-sm transition-colors"
+                                                    className="flex items-center gap-3 px-4 py-4 border border-green-500/20 bg-green-500/5 hover:bg-green-500/20 hover:border-green-500/50 text-zinc-200 rounded-xl transition-all group/btn w-full sm:w-1/2"
                                                 >
-                                                    <ShoppingCart className="w-4 h-4" />
-                                                    {link.name || '구매하기'}
-                                                    <ExternalLink className="w-3 h-3 opacity-50" />
+                                                    <div className="p-2 rounded-lg bg-green-500/10 text-green-500 group-hover/btn:bg-green-500 group-hover/btn:text-white transition-colors">
+                                                        <Book className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="flex flex-col text-left">
+                                                        <span className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Preview</span>
+                                                        <span className="font-bold text-green-100 group-hover/btn:text-white">미리보기</span>
+                                                    </div>
+                                                    <ExternalLink className="w-4 h-4 ml-auto opacity-30 group-hover/btn:opacity-100 transition-opacity" />
                                                 </a>
-                                            ))}
-                                        </div>
-                                    ) : previewPublication?.link ? (
-                                        <a
-                                            href={previewPublication.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 px-4 py-2 border border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400 text-zinc-300 rounded text-sm transition-colors"
-                                        >
-                                            <Book className="w-4 h-4" />
-                                            미리보기
-                                            <ExternalLink className="w-3 h-3 opacity-50" />
-                                        </a>
-                                    ) : null}
+                                            </div>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </div>
-                        </SpotlightCard>
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center text-white/50">
+                            로딩 중...
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 
