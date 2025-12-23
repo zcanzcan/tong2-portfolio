@@ -41,8 +41,7 @@ export async function POST(request: Request) {
         let errorMsg = '';
 
         if (section === 'profile') {
-            // Profile은 단일 Row이므로 첫 번째 row를 업데이트하거나 생성
-            const { data: existing } = await supabase.from('profile').select('id').limit(1).single();
+            const { data: existing } = await supabase.from('profile').select('id').limit(1).maybeSingle();
             const profileData = {
                 name: sanitizedData.name,
                 name_en: sanitizedData.nameEn,
@@ -64,22 +63,22 @@ export async function POST(request: Request) {
             if (error) errorMsg = error.message;
             else success = true;
 
-        } else if (['experience', 'heroButtons', 'socials', 'publications', 'projects'].includes(section)) {
-            // 배열 데이터 섹션들은 기존 데이터를 삭제하고 새로 인서트하는 방식 (순서 유지 용이)
+        } else if (['experience', 'heroButtons', 'socials', 'publications', 'projects', 'skills', 'certifications'].includes(section)) {
             const tableName = section === 'experience' ? 'experiences' : 
                              section === 'heroButtons' ? 'hero_buttons' :
                              section === 'socials' ? 'social_links' : 
-                             section === 'publications' ? 'publications' : 'projects';
+                             section === 'publications' ? 'publications' : 
+                             section === 'skills' ? 'skills' :
+                             section === 'certifications' ? 'certifications' : 'projects';
             
             // 1. 기존 데이터 삭제
-            await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000'); // 모든 row 삭제
+            await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
             // 2. 새 데이터 인서트
             if (Array.isArray(sanitizedData) && sanitizedData.length > 0) {
                 const rowsToInsert = sanitizedData.map((item, index) => {
                     const row: any = { sort_order: index };
                     
-                    // 각 테이블 컬럼에 맞게 매핑
                     if (tableName === 'experiences') {
                         row.role = item.role;
                         row.role_en = item.roleEn;
@@ -118,6 +117,17 @@ export async function POST(request: Request) {
                         row.link = item.link;
                         row.tags = item.tags || [];
                         row.image = item.image;
+                    } else if (tableName === 'skills') {
+                        row.name = item.name;
+                        row.icon = item.icon;
+                        row.color = item.color;
+                    } else if (tableName === 'certifications') {
+                        row.name = item.name;
+                        row.name_en = item.nameEn;
+                        row.issuer = item.issuer;
+                        row.issuer_en = item.issuerEn;
+                        row.date = item.date;
+                        row.url = item.url;
                     }
                     return row;
                 });
@@ -126,10 +136,10 @@ export async function POST(request: Request) {
                 if (error) errorMsg = error.message;
                 else success = true;
             } else {
-                success = true; // 비어있는 배열도 성공으로 간주
+                success = true;
             }
         } else if (section === 'blog') {
-            const { data: existing } = await supabase.from('blog_info').select('id').limit(1).single();
+            const { data: existing } = await supabase.from('blog_info').select('id').limit(1).maybeSingle();
             const blogData = {
                 title: sanitizedData.title,
                 description: sanitizedData.description,

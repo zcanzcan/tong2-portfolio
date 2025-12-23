@@ -11,9 +11,11 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
             { data: heroButtons },
             { data: experiences },
             { data: publications },
-            { data: showcaseProjects },
+            { data: projects },
             { data: socialLinks },
-            { data: blogInfo }
+            { data: blogInfo },
+            { data: skills },
+            { data: certifications }
         ] = await Promise.all([
             supabase.from('profile').select('*').single(),
             supabase.from('hero_buttons').select('*').order('sort_order', { ascending: true }),
@@ -21,19 +23,89 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
             supabase.from('publications').select('*').order('sort_order', { ascending: true }),
             supabase.from('projects').select('*').order('sort_order', { ascending: true }),
             supabase.from('social_links').select('*').order('sort_order', { ascending: true }),
-            supabase.from('blog_info').select('*').single()
+            supabase.from('blog_info').select('*').single(),
+            supabase.from('skills').select('*').order('sort_order', { ascending: true }),
+            supabase.from('certifications').select('*').order('sort_order', { ascending: true })
         ]);
 
         const portfolioData: any = {
-            profile: profile || {},
-            heroButtons: heroButtons || [],
-            experience: experiences || [],
-            publications: publications || [],
-            projects: showcaseProjects || [],
-            socials: socialLinks || [],
-            blog: blogInfo || {},
-            skills: [], // 스키마에 없으므로 빈 배열
-            certifications: [], // 스키마에 없으므로 빈 배열
+            profile: profile ? {
+                name: profile.name,
+                nameEn: profile.name_en,
+                title: profile.title,
+                titleEn: profile.title_en,
+                bio: profile.bio,
+                bioEn: profile.bio_en,
+                status: profile.status,
+                statusEn: profile.status_en,
+                image: profile.image
+            } : {},
+            heroButtons: (heroButtons || []).map(b => ({
+                text: b.text,
+                textEn: b.text_en,
+                icon: b.icon,
+                url: b.url,
+                variant: b.variant,
+                dropdownItems: b.dropdown_items
+            })),
+            experience: (experiences || []).map(e => ({
+                id: e.id,
+                role: e.role,
+                roleEn: e.role_en,
+                company: e.company,
+                companyEn: e.company_en,
+                period: e.period,
+                periodEn: e.period_en,
+                color: e.color
+            })),
+            publications: (publications || []).map(p => ({
+                id: p.id,
+                tag: p.tag,
+                tagEn: p.tag_en,
+                title: p.title,
+                titleEn: p.title_en,
+                description: p.description,
+                descriptionEn: p.description_en,
+                image: p.image,
+                link: p.link,
+                purchaseLinks: p.purchase_links
+            })),
+            projects: (projects || []).map(p => ({
+                id: p.id,
+                title: p.title,
+                titleEn: p.title_en,
+                description: p.description,
+                descriptionEn: p.description_en,
+                link: p.link,
+                tags: p.tags,
+                image: p.image
+            })),
+            socials: (socialLinks || []).map(s => ({
+                id: s.id,
+                name: s.name,
+                icon: s.icon,
+                url: s.url,
+                color: s.color
+            })),
+            blog: blogInfo ? {
+                title: blogInfo.title,
+                description: blogInfo.description,
+                url: blogInfo.url
+            } : {},
+            skills: (skills || []).map(s => ({
+                name: s.name,
+                icon: s.icon,
+                color: s.color
+            })),
+            certifications: (certifications || []).map(c => ({
+                id: c.id,
+                name: c.name,
+                nameEn: c.name_en,
+                issuer: c.issuer,
+                issuerEn: c.issuer_en,
+                date: c.date,
+                url: c.url
+            })),
             calendar: {}
         };
 
