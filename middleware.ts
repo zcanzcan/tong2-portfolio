@@ -27,7 +27,9 @@ export function middleware(request: NextRequest) {
         const maxRequests = isUploadAPI ? 10 : 100
         const windowMs = isUploadAPI ? 60000 : 60000 // 1분
 
-        const rateLimit = checkRateLimit(clientIP, maxRequests, windowMs)
+        // API 종류별로 별도 버킷을 사용해 다른 엔드포인트 호출량이 업로드 제한에 영향을 주지 않도록 함
+        const rateLimitKey = `${clientIP}:${isUploadAPI ? 'upload' : 'api'}`
+        const rateLimit = checkRateLimit(rateLimitKey, maxRequests, windowMs)
 
         if (!rateLimit.allowed) {
             return NextResponse.json(

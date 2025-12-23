@@ -48,9 +48,16 @@ export function checkRateLimit(
 /**
  * IP 주소 추출 (프록시 환경 고려)
  */
-export function getClientIP(request: Request): string {
+export function getClientIP(request: Request & { ip?: string | null }): string {
+  // Next.js 제공 IP 우선 사용 (미들웨어에서 접근 가능)
+  const directIP = request.ip;
+  if (directIP) {
+    return directIP;
+  }
+
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
+  const cfIP = request.headers.get('cf-connecting-ip');
   
   if (forwarded) {
     return forwarded.split(',')[0].trim();
@@ -58,6 +65,10 @@ export function getClientIP(request: Request): string {
   
   if (realIP) {
     return realIP;
+  }
+
+  if (cfIP) {
+    return cfIP;
   }
   
   return 'unknown';

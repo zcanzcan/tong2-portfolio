@@ -1,15 +1,33 @@
 import { NextResponse } from 'next/server';
-import { getPortfolioData, savePortfolioData } from '@/lib/data';
+import { getServiceSupabase } from '@/lib/supabase-client';
+import { sanitizeInput } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const data = await getPortfolioData();
-        if (!data || !data.projects) {
-            return NextResponse.json([]);
-        }
-        return NextResponse.json(data.projects);
+        const supabase = getServiceSupabase();
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        
+        // camelCase로 변환하여 프런트엔드 호환성 유지
+        const formattedData = (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            titleEn: item.title_en,
+            description: item.description,
+            descriptionEn: item.description_en,
+            link: item.link,
+            tags: item.tags,
+            image: item.image,
+            sort_order: item.sort_order
+        }));
+
+        return NextResponse.json(formattedData);
     } catch (error) {
         console.error('Error fetching projects:', error);
         return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
@@ -18,110 +36,91 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const newProject = await request.json();
+        const body = await request.json();
+        const sanitized = sanitizeInput(body);
+        const supabase = getServiceSupabase();
         
-        // Ensure required fields
-        if (!newProject.title) {
+        if (!sanitized.title) {
             return NextResponse.json({ error: 'Project title is required' }, { status: 400 });
         }
 
-        // Generate ID if not provided
-        if (!newProject.id) {
-            newProject.id = Date.now();
-        }
+        const projectData = {
+            title: sanitized.title,
+            title_en: sanitized.titleEn,
+            description: sanitized.description,
+            description_en: sanitized.descriptionEn,
+            link: sanitized.link,
+            tags: sanitized.tags || [],
+            image: sanitized.image,
+            updated_at: new Date().toISOString()
+        };
 
-        const data = await getPortfolioData();
+        const { data, error } = await supabase
+            .from('projects')
+            .insert(projectData)
+            .select()
+            .single();
 
-        if (!data) {
-            return NextResponse.json({ error: 'Failed to load data' }, { status: 500 });
-        }
-
-        if (!data.projects) data.projects = [];
-        data.projects.push(newProject);
-
-        const success = await savePortfolioData(data);
-        if (!success) {
-            return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
-        }
-
-        return NextResponse.json({ message: 'Project added successfully', project: newProject });
+        if (error) throw error;
+        return NextResponse.json({ message: 'Project added successfully', project: data });
     } catch (error) {
         console.error('Error adding project:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Invalid request';
-        return NextResponse.json({ error: errorMessage }, { status: 400 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Invalid request' }, { status: 400 });
     }
 }
 
 export async function PUT(request: Request) {
     try {
-        const { index, project } = await request.json();
+        const { id, project } = await request.json();
+        const sanitized = sanitizeInput(project);
+        const supabase = getServiceSupabase();
         
-        if (index === undefined || index === null) {
-            return NextResponse.json({ error: 'Index is required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
-        if (!project || !project.title) {
-            return NextResponse.json({ error: 'Project data and title are required' }, { status: 400 });
-        }
+        const projectData = {
+            title: sanitized.title,
+            title_en: sanitized.titleEn,
+            description: sanitized.description,
+            description_en: sanitized.descriptionEn,
+            link: sanitized.link,
+            tags: sanitized.tags || [],
+            image: sanitized.image,
+            updated_at: new Date().toISOString()
+        };
 
-        const data = await getPortfolioData();
+        const { error } = await supabase
+            .from('projects')
+            .update(projectData)
+            .eq('id', id);
 
-        if (!data || !data.projects) {
-            return NextResponse.json({ error: 'Failed to load data' }, { status: 500 });
-        }
-
-        if (index >= 0 && index < data.projects.length) {
-            // Preserve existing ID if not provided
-            if (!project.id && data.projects[index].id) {
-                project.id = data.projects[index].id;
-            }
-            data.projects[index] = project;
-            const success = await savePortfolioData(data);
-
-            if (success) {
-                return NextResponse.json({ success: true });
-            } else {
-                return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
-            }
-        } else {
-            return NextResponse.json({ error: `Invalid index: ${index}` }, { status: 400 });
-        }
+        if (error) throw error;
+        return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error updating project:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update project';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update project' }, { status: 500 });
     }
 }
 
 export async function DELETE(request: Request) {
     try {
-        const { index } = await request.json();
+        const { id } = await request.json();
+        const supabase = getServiceSupabase();
         
-        if (index === undefined || index === null) {
-            return NextResponse.json({ error: 'Index is required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
-        const data = await getPortfolioData();
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id);
 
-        if (!data || !data.projects) {
-            return NextResponse.json({ error: 'Failed to load data' }, { status: 500 });
-        }
-
-        if (index >= 0 && index < data.projects.length) {
-            data.projects.splice(index, 1);
-            const success = await savePortfolioData(data);
-
-            if (success) {
-                return NextResponse.json({ success: true });
-            } else {
-                return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
-            }
-        } else {
-            return NextResponse.json({ error: `Invalid index: ${index}` }, { status: 400 });
-        }
+        if (error) throw error;
+        return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting project:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to delete project';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to delete project' }, { status: 500 });
     }
 }

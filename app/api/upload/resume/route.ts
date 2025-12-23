@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import { existsSync } from 'fs';
+import { NextResponse } from 'next/server'
+import path from 'path'
+import { sanitizeFilename } from '@/lib/security'
+import { getServiceSupabase } from '@/lib/supabase-client'
 
 export const dynamic = 'force-dynamic';
 
@@ -47,67 +47,81 @@ export async function POST(request: Request) {
             );
         }
 
-        const formData = await request.formData();
-        const file = formData.get('file') as File | null;
+        const formData = await request.formData()
+        const file = formData.get('file') as File | null
 
         console.log('Resume upload request received:', {
             hasFile: !!file,
             fileName: file?.name,
             fileSize: file?.size,
             fileType: file?.type,
-        });
+        })
 
         if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 })
         }
 
-        const uploadDir = path.join(process.cwd(), 'public', 'resume');
+        const supabase = getServiceSupabase()
+        const bucket = process.env.SUPABASE_BUCKET || 'uploads'
 
-        const { saveUploadedFile } = await import('@/lib/upload-utils');
-
-        const result = await saveUploadedFile({
-            file,
-            uploadDir,
-            allowedTypes: [
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/x-hwp',
-                'application/haansofthwp',
-                'application/vnd.hancom.hwp',
-                'application/x-hwpl',
-                'application/vnd.hancom.hwpl',
-                'application/octet-stream'
-            ],
-            allowedExtensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.hwp', '.hwpx'],
-            maxSize: 50 * 1024 * 1024, // 50MB
-            filenamePrefix: 'resume'
-        });
-
-        if (!result.success) {
-            return NextResponse.json({ error: result.error }, { status: result.status || 500 });
+        // Validate type
+        const isAllowedType = ALLOWED_TYPES.includes(file.type) || file.type === ''
+        if (!isAllowedType) {
+            return NextResponse.json(
+                { error: `Invalid file type: ${file.type}` },
+                { status: 400 }
+            )
         }
 
-        console.log('Resume file saved successfully:', result.fileName);
+        // Validate size
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json(
+                { error: 'File size exceeds 50MB limit' },
+                { status: 400 }
+            )
+        }
 
-        const publicPath = `/resume/${result.fileName}`;
+        const originalExt = path.extname(file.name) || ''
+        const base = sanitizeFilename(path.basename(file.name, originalExt) || 'resume')
+        const safeExt = sanitizeFilename(originalExt || '.pdf')
+        const fileName = `${base}_${Date.now()}${safeExt}`
+        const objectPath = `resume/${fileName}`
+
+        const arrayBuffer = await file.arrayBuffer()
+        const { error: uploadError } = await supabase.storage
+            .from(bucket)
+            .upload(objectPath, Buffer.from(arrayBuffer), {
+                contentType: file.type || 'application/octet-stream',
+                upsert: false
+            })
+
+        if (uploadError) {
+            console.error('Supabase resume upload error:', uploadError)
+            return NextResponse.json(
+                { error: uploadError.message || 'Failed to upload resume file' },
+                { status: 500 }
+            )
+        }
+
+        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(objectPath)
+        const publicPath = publicUrlData?.publicUrl || objectPath
+
+        console.log('Resume file saved successfully:', objectPath)
 
         return NextResponse.json({
             success: true,
             path: publicPath,
-            fileName: result.fileName,
+            fileName,
             fileSize: file.size,
             fileType: file.type
-        });
+        })
 
     } catch (error) {
         console.error('Resume upload error:', error);
         return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to upload resume file',
             details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
-        }, { status: 500 });
+        }, { status: 500 })
     }
 }
 

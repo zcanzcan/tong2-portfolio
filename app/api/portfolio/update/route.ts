@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getPortfolioData, savePortfolioData } from '@/lib/data';
-import { PortfolioData } from '@/types/portfolio';
+import { getServiceSupabase } from '@/lib/supabase-client';
 import { sanitizeInput, validateJSONSize } from '@/lib/security';
-import { cookies } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,111 +20,138 @@ function isAuthenticated(request: Request): boolean {
 
 export async function POST(request: Request) {
     try {
-        // 인증 확인
         if (!isAuthenticated(request)) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await request.json();
-        
-        // JSON 크기 검증
-        if (!validateJSONSize(body, 500)) { // 500KB 제한
-            return NextResponse.json(
-                { error: 'Request payload too large' },
-                { status: 413 }
-            );
+        if (!validateJSONSize(body, 500)) {
+            return NextResponse.json({ error: 'Request payload too large' }, { status: 413 });
         }
 
         const { section, data } = body;
-
         if (!section || data === undefined || data === null) {
             return NextResponse.json({ error: 'Missing section or data' }, { status: 400 });
         }
 
-        // Section 검증 (허용된 섹션만)
-        const allowedSections = [
-            'profile', 'heroButtons', 'experience', 'skills', 
-            'certifications', 'blog', 'publications', 'socials', 'calendar'
-        ];
-        
-        if (!allowedSections.includes(section)) {
-            return NextResponse.json(
-                { error: `Invalid section: ${section}` },
-                { status: 400 }
-            );
-        }
-
-        // 입력값 Sanitization
+        const supabase = getServiceSupabase();
         const sanitizedData = sanitizeInput(data);
 
-        // Read existing data
-        const portfolioData = await getPortfolioData();
-
-        if (!portfolioData) {
-            return NextResponse.json({ error: 'Failed to read portfolio data' }, { status: 500 });
-        }
-
-        // Update specific section
-        // We need to cast to any to allow dynamic property access with string key 'section'
-        // or use a switch statement for type safety. Let's use strict checks for safety.
+        let success = false;
+        let errorMsg = '';
 
         if (section === 'profile') {
-            portfolioData.profile = { ...portfolioData.profile, ...sanitizedData };
-        } else if (section === 'heroButtons') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'heroButtons must be an array' }, { status: 400 });
+            // Profile은 단일 Row이므로 첫 번째 row를 업데이트하거나 생성
+            const { data: existing } = await supabase.from('profile').select('id').limit(1).single();
+            const profileData = {
+                name: sanitizedData.name,
+                name_en: sanitizedData.nameEn,
+                title: sanitizedData.title,
+                title_en: sanitizedData.titleEn,
+                bio: sanitizedData.bio,
+                bio_en: sanitizedData.bioEn,
+                status: sanitizedData.status,
+                status_en: sanitizedData.statusEn,
+                image: sanitizedData.image,
+                updated_at: new Date().toISOString()
+            };
+
+            const query = existing 
+                ? supabase.from('profile').update(profileData).eq('id', existing.id)
+                : supabase.from('profile').insert(profileData);
+            
+            const { error } = await query;
+            if (error) errorMsg = error.message;
+            else success = true;
+
+        } else if (['experience', 'heroButtons', 'socials', 'publications', 'projects'].includes(section)) {
+            // 배열 데이터 섹션들은 기존 데이터를 삭제하고 새로 인서트하는 방식 (순서 유지 용이)
+            const tableName = section === 'experience' ? 'experiences' : 
+                             section === 'heroButtons' ? 'hero_buttons' :
+                             section === 'socials' ? 'social_links' : 
+                             section === 'publications' ? 'publications' : 'projects';
+            
+            // 1. 기존 데이터 삭제
+            await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000'); // 모든 row 삭제
+
+            // 2. 새 데이터 인서트
+            if (Array.isArray(sanitizedData) && sanitizedData.length > 0) {
+                const rowsToInsert = sanitizedData.map((item, index) => {
+                    const row: any = { sort_order: index };
+                    
+                    // 각 테이블 컬럼에 맞게 매핑
+                    if (tableName === 'experiences') {
+                        row.role = item.role;
+                        row.role_en = item.roleEn;
+                        row.company = item.company;
+                        row.company_en = item.companyEn;
+                        row.period = item.period;
+                        row.period_en = item.periodEn;
+                        row.color = item.color;
+                    } else if (tableName === 'hero_buttons') {
+                        row.text = item.text;
+                        row.text_en = item.textEn;
+                        row.icon = item.icon;
+                        row.url = item.url;
+                        row.variant = item.variant;
+                        row.dropdown_items = item.dropdownItems || [];
+                    } else if (tableName === 'social_links') {
+                        row.name = item.name;
+                        row.icon = item.icon;
+                        row.url = item.url;
+                        row.color = item.color;
+                    } else if (tableName === 'publications') {
+                        row.tag = item.tag;
+                        row.tag_en = item.tagEn;
+                        row.title = item.title;
+                        row.title_en = item.titleEn;
+                        row.description = item.description;
+                        row.description_en = item.descriptionEn;
+                        row.image = item.image;
+                        row.link = item.link;
+                        row.purchase_links = item.purchaseLinks || [];
+                    } else if (tableName === 'projects') {
+                        row.title = item.title;
+                        row.title_en = item.titleEn;
+                        row.description = item.description;
+                        row.description_en = item.descriptionEn;
+                        row.link = item.link;
+                        row.tags = item.tags || [];
+                        row.image = item.image;
+                    }
+                    return row;
+                });
+
+                const { error } = await supabase.from(tableName).insert(rowsToInsert);
+                if (error) errorMsg = error.message;
+                else success = true;
+            } else {
+                success = true; // 비어있는 배열도 성공으로 간주
             }
-            portfolioData.heroButtons = sanitizedData;
-        } else if (section === 'experience') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'experience must be an array' }, { status: 400 });
-            }
-            portfolioData.experience = sanitizedData;
-        } else if (section === 'skills') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'skills must be an array' }, { status: 400 });
-            }
-            portfolioData.skills = sanitizedData;
-        } else if (section === 'certifications') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'certifications must be an array' }, { status: 400 });
-            }
-            portfolioData.certifications = sanitizedData;
         } else if (section === 'blog') {
-            portfolioData.blog = { ...portfolioData.blog, ...sanitizedData };
-        } else if (section === 'publications') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'publications must be an array' }, { status: 400 });
-            }
-            console.log('[API] Updating publications:', JSON.stringify(sanitizedData, null, 2));
-            portfolioData.publications = sanitizedData;
-        } else if (section === 'socials') {
-            if (!Array.isArray(sanitizedData)) {
-                return NextResponse.json({ error: 'socials must be an array' }, { status: 400 });
-            }
-            portfolioData.socials = sanitizedData;
-        } else if (section === 'calendar') {
-            if (!portfolioData.calendar) {
-                portfolioData.calendar = {};
-            }
-            portfolioData.calendar = { ...portfolioData.calendar, ...sanitizedData };
-            console.log('[API] Calendar data being saved:', JSON.stringify(portfolioData.calendar, null, 2));
+            const { data: existing } = await supabase.from('blog_info').select('id').limit(1).single();
+            const blogData = {
+                title: sanitizedData.title,
+                description: sanitizedData.description,
+                url: sanitizedData.url
+            };
+
+            const query = existing 
+                ? supabase.from('blog_info').update(blogData).eq('id', existing.id)
+                : supabase.from('blog_info').insert(blogData);
+            
+            const { error } = await query;
+            if (error) errorMsg = error.message;
+            else success = true;
         }
 
-        // Write back to file
-        const success = await savePortfolioData(portfolioData);
-
         if (!success) {
-            return NextResponse.json({ error: 'Failed to save portfolio data' }, { status: 500 });
+            return NextResponse.json({ error: errorMsg || 'Failed to save to Supabase' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, message: 'Updated successfully' });
     } catch (error) {
         console.error('Update Error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update data';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update data' }, { status: 500 });
     }
 }
