@@ -153,6 +153,24 @@ export async function POST(request: Request) {
             const { error } = await query;
             if (error) errorMsg = error.message;
             else success = true;
+        } else if (section === 'calendar') {
+            const { data: existing } = await supabase.from('calendar_config').select('id').limit(1).maybeSingle();
+            const calendarData = {
+                calendar_id: sanitizedData.calendarId,
+                api_key: sanitizedData.apiKey,
+                refresh_token: sanitizedData.refreshToken,
+                oauth_client_id: sanitizedData.oauthClientId,
+                oauth_client_secret: sanitizedData.oauthClientSecret,
+                updated_at: new Date().toISOString()
+            };
+
+            const query = existing 
+                ? supabase.from('calendar_config').update(calendarData).eq('id', existing.id)
+                : supabase.from('calendar_config').insert(calendarData);
+            
+            const { error } = await query;
+            if (error) errorMsg = error.message;
+            else success = true;
         }
 
         if (!success) {

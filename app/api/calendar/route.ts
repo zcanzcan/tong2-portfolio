@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getServiceSupabase } from '@/lib/supabase-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,13 +10,18 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url)
-    const calendarId = searchParams.get('calendarId')
+    const calendarIdParam = searchParams.get('calendarId')
     const apiKeyParam = searchParams.get('apiKey') // 관리자 페이지에서 입력한 API 키
 
+    // 0. DB에서 구글 설정 가져오기
+    const supabase = getServiceSupabase();
+    const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
+
+    const calendarId = calendarIdParam || calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID;
+    
     console.log('[Calendar API] Parameters:', {
       calendarId: calendarId || 'MISSING',
-      hasApiKey: !!apiKeyParam,
-      apiKeyLength: apiKeyParam?.length || 0
+      hasApiKey: !!apiKeyParam || !!calendarConfig?.api_key,
     })
 
     if (!calendarId) {
@@ -23,27 +29,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Calendar ID is required' }, { status: 400 })
     }
 
-    // 이번 달 시작일과 종료일 계산 (로컬 시간 기준)
+    // ... 날짜 계산 부분 유지 ...
     const now = new Date()
     const year = now.getFullYear()
     const month = now.getMonth()
-
-    // 이번 달 1일 00:00:00 (로컬 시간)
     const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0)
-
-    // 다음 달 0일 = 이번 달 마지막 날 23:59:59 (로컬 시간)
     const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999)
-
-    console.log('[Calendar API] Date calculation:', {
-      now: now.toISOString(),
-      localTime: now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
-      startOfMonth: startOfMonth.toISOString(),
-      endOfMonth: endOfMonth.toISOString(),
-      year,
-      month: month + 1 // 1-based month
-    })
-
-    // 날짜 범위 ISO 문자열
     const timeMin = startOfMonth.toISOString()
     const timeMax = endOfMonth.toISOString()
 
@@ -52,15 +43,13 @@ export async function GET(request: Request) {
     if (!calendarId.includes('@') && !calendarId.includes('%40')) {
       if (calendarId.startsWith('gen-lang-client-')) {
         normalizedCalendarId = `${calendarId}@group.calendar.google.com`
-        console.log('[Calendar API] Normalized calendar ID:', normalizedCalendarId)
       }
     }
 
-    // 1. OAuth 2.0 토큰 사용 시도 (환경 변수)
-    // Vercel 환경에서는 파일 시스템이 읽기 전용이므로 환경 변수를 통해 Refresh Token을 제공해야 함
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN
-    const clientId = process.env.GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+    // 1. OAuth 2.0 토큰 사용 시도 (DB 또는 환경 변수)
+    const refreshToken = calendarConfig?.refresh_token || process.env.GOOGLE_REFRESH_TOKEN
+    const clientId = calendarConfig?.oauth_client_id || process.env.GOOGLE_CLIENT_ID
+    const clientSecret = calendarConfig?.oauth_client_secret || process.env.GOOGLE_CLIENT_SECRET
 
     let accessToken: string | null = null
 
@@ -92,7 +81,7 @@ export async function GET(request: Request) {
     }
 
     // 2. API 키 (기존 방식 fallback)
-    const apiKey = apiKeyParam || process.env.GOOGLE_CALENDAR_API_KEY
+    const apiKey = apiKeyParam || calendarConfig?.api_key || process.env.GOOGLE_CALENDAR_API_KEY
 
     // Google Calendar API URL
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/events`

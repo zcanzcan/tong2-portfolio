@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+import { getServiceSupabase } from '@/lib/supabase-client'
 
 export const dynamic = 'force-dynamic'
 
-// Refresh Token을 사용하여 새 액세스 토큰 발급
+// ... refreshAccessToken 함수 유지 ...
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<{ accessToken: string; expiresIn: number } | null> {
+// ... (생략된 부분은 동일)
   try {
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -52,10 +54,15 @@ export async function POST(request: Request) {
       location
     } = body
 
-    // Fallback to Environment Variables if not provided in body
-    if (!oauthClientId) oauthClientId = process.env.GOOGLE_CLIENT_ID
-    if (!oauthClientSecret) oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET
-    if (!refreshToken) refreshToken = process.env.GOOGLE_REFRESH_TOKEN
+    // DB에서 구글 설정 가져오기
+    const supabase = getServiceSupabase();
+    const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
+
+    // Fallback order: Body > Database > Environment Variables
+    if (!calendarId) calendarId = calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID
+    if (!oauthClientId) oauthClientId = calendarConfig?.oauth_client_id || process.env.GOOGLE_CLIENT_ID
+    if (!oauthClientSecret) oauthClientSecret = calendarConfig?.oauth_client_secret || process.env.GOOGLE_CLIENT_SECRET
+    if (!refreshToken) refreshToken = calendarConfig?.refresh_token || process.env.GOOGLE_REFRESH_TOKEN
 
     if (!calendarId || !summary || !startDateTime) {
       return NextResponse.json(
