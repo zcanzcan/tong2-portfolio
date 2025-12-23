@@ -3,10 +3,17 @@ import { getServiceSupabase } from '@/lib/supabase-client'
 
 export const dynamic = 'force-dynamic'
 
-// Refresh Token을 사용하여 새 액세스 토큰 발급
+/**
+ * Refresh Token을 사용하여 새 액세스 토큰 발급
+ */
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<{ accessToken: string; expiresIn: number; error?: any } | null> {
   try {
-    console.log('[Calendar Create API] Refreshing token...');
+    // 공백 제거 (매우 중요)
+    const rToken = refreshToken.trim();
+    const cId = clientId.trim();
+    const cSecret = clientSecret.trim();
+
+    console.log('[Calendar Create API] Attempting token refresh...');
 
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -14,9 +21,9 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
+        client_id: cId,
+        client_secret: cSecret,
+        refresh_token: rToken,
         grant_type: 'refresh_token',
       }),
     })
@@ -24,26 +31,29 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      console.error('[Calendar Create API] Token refresh failed response:', data)
+      console.error('[Calendar Create API] Token refresh failed. Google responded with:', data);
       return { accessToken: '', expiresIn: 0, error: data };
     }
 
+    console.log('[Calendar Create API] Token refreshed successfully');
     return {
       accessToken: data.access_token,
-      expiresIn: data.expires_in || 3600, // 기본 1시간
+      expiresIn: data.expires_in || 3600,
     }
   } catch (error) {
-    console.error('[Calendar Create API] Token refresh error:', error)
-    return null
+    console.error('[Calendar Create API] Unexpected error during token refresh:', error);
+    return null;
   }
 }
 
-// Google Calendar API를 사용하여 일정 생성
+/**
+ * Google Calendar API를 사용하여 일정 생성
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     
-    // DB에서 구글 설정 가져오기 (가장 정확한 소스)
+    // DB에서 최신 구글 설정 가져오기 (가장 신뢰할 수 있는 소스)
     const supabase = getServiceSupabase();
     const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
 
@@ -60,42 +70,47 @@ export async function POST(request: Request) {
       location
     } = body
 
-    // DB 데이터가 있으면 우선적으로 사용 (클라이언트의 오래된 데이터 방지)
-    calendarId = calendarId || calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID
-    oauthClientId = calendarConfig?.oauth_client_id || oauthClientId || process.env.GOOGLE_CLIENT_ID
-    oauthClientSecret = calendarConfig?.oauth_client_secret || oauthClientSecret || process.env.GOOGLE_CLIENT_SECRET
-    refreshToken = calendarConfig?.refresh_token || refreshToken || process.env.GOOGLE_REFRESH_TOKEN
+    // 우선순위: DB 데이터 > Body 데이터 > 환경 변수
+    // DB에 데이터가 있다면 무조건 DB 값을 우선시하여 클라이언트의 잘못된/오래된 데이터를 방지합니다.
+    const finalCalendarId = (calendarConfig?.calendar_id || calendarId || process.env.GOOGLE_CALENDAR_ID || '').trim();
+    const finalClientId = (calendarConfig?.oauth_client_id || oauthClientId || process.env.GOOGLE_CLIENT_ID || '').trim();
+    const finalClientSecret = (calendarConfig?.oauth_client_secret || oauthClientSecret || process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    const finalRefreshToken = (calendarConfig?.refresh_token || refreshToken || process.env.GOOGLE_REFRESH_TOKEN || '').trim();
 
-    if (!calendarId || !summary || !startDateTime) {
+    if (!finalCalendarId || !summary || !startDateTime) {
       return NextResponse.json(
         { error: '필수 필드가 누락되었습니다: calendarId, summary, startDateTime' },
         { status: 400 }
       )
     }
 
-    // OAuth 2.0 액세스 토큰 (요청에 있으면 사용, 없으면 DB/환경변수에서 갱신 시도)
-    let token = accessToken;
+    // 액세스 토큰 (현재 유효할 것으로 기대되는 토큰)
+    let currentToken = accessToken || '';
     let refreshErrorDetail = null;
 
-    // 토큰이 없거나 만료된 것으로 의심될 때 갱신 시도
-    if (!token && refreshToken && oauthClientId && oauthClientSecret) {
-      console.log('[Calendar Create API] Access token not found in request, attempting refresh with DB config...')
-      const refreshed = await refreshAccessToken(refreshToken, oauthClientId, oauthClientSecret)
+    // 1. 토큰이 아예 없으면 리프레시 토큰으로 즉시 갱신 시도
+    if (!currentToken && finalRefreshToken && finalClientId && finalClientSecret) {
+      console.log('[Calendar Create API] No access token provided, trying to refresh using DB config...');
+      const refreshed = await refreshAccessToken(finalRefreshToken, finalClientId, finalClientSecret);
       if (refreshed?.accessToken) {
-        token = refreshed.accessToken
+        currentToken = refreshed.accessToken;
       } else if (refreshed?.error) {
         refreshErrorDetail = refreshed.error;
       }
     }
 
-    if (!token) {
+    // 2. 여전히 토큰이 없다면 에러 반환
+    if (!currentToken) {
       return NextResponse.json(
         {
-          error: 'OAuth 2.0 액세스 토큰이 필요합니다.',
-          message: 'Google Calendar API로 일정을 생성하려면 OAuth 2.0 액세스 토큰 또는 Refresh Token이 필요합니다.',
+          error: '인증 실패',
+          details: refreshErrorDetail ? `Google Error: ${JSON.stringify(refreshErrorDetail)}` : 'OAuth 2.0 액세스 토큰이 필요합니다.',
+          message: finalRefreshToken 
+            ? '자동 토큰 갱신에 실패했습니다. 관리자 페이지에서 다시 연동해 주세요.' 
+            : '인증 정보가 부족합니다. 구글 캘린더 연동을 진행해 주세요.',
           instructions: [
-            '방법 1: OAuth 2.0 Playground에서 Access Token 발급',
-            '방법 2: Refresh Token을 입력하면 자동으로 Access Token이 갱신됩니다 (권장)'
+            '1. 관리자 페이지에서 다시 한번 "구글 캘린더 연동" 클릭',
+            '2. 반드시 "캘린더 설정 저장" 버튼 클릭'
           ]
         },
         { status: 401 }
@@ -103,159 +118,88 @@ export async function POST(request: Request) {
     }
 
     // 캘린더 ID 정규화
-    let normalizedCalendarId = calendarId
-    if (!calendarId.includes('@') && calendarId.startsWith('gen-lang-client-')) {
-      normalizedCalendarId = `${calendarId}@group.calendar.google.com`
+    let normalizedCalendarId = finalCalendarId;
+    if (!finalCalendarId.includes('@') && finalCalendarId.startsWith('gen-lang-client-')) {
+      normalizedCalendarId = `${finalCalendarId}@group.calendar.google.com`;
     }
 
     // 일정 데이터 구성
-    const eventData: any = {
+    const eventData = {
       summary,
-      start: {
-        dateTime: startDateTime,
-        timeZone: 'Asia/Seoul'
-      },
-      end: {
-        dateTime: endDateTime || startDateTime,
-        timeZone: 'Asia/Seoul'
-      }
-    }
+      description: description || '',
+      location: location || '',
+      start: { dateTime: startDateTime, timeZone: 'Asia/Seoul' },
+      end: { dateTime: endDateTime || startDateTime, timeZone: 'Asia/Seoul' }
+    };
 
-    if (description) {
-      eventData.description = description
-    }
+    // 3. Google Calendar API로 일정 생성 시도
+    const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/events`;
 
-    if (location) {
-      eventData.location = location
-    }
+    const makeRequest = async (token: string) => {
+      return fetch(calendarUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventData)
+      });
+    };
 
-    // Google Calendar API로 일정 생성
-    const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(normalizedCalendarId)}/events`
+    let response = await makeRequest(currentToken);
+    let responseData = await response.json();
 
-    console.log('[Calendar Create API] Creating event:', {
-      calendarId: normalizedCalendarId,
-      summary,
-      startDateTime,
-      endDateTime
-    })
-
-    const response = await fetch(calendarUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(eventData)
-    })
-
-    const responseData = await response.json()
-
-    if (!response.ok) {
-      console.error('[Calendar Create API] Error response:', responseData)
-
-      // 토큰 만료 또는 인증 오류 감지
-      const errorMessage = responseData.error?.message || responseData.error || '알 수 없는 오류'
-      const isAuthError = response.status === 401 ||
-        errorMessage.includes('invalid authentication') ||
-        errorMessage.includes('invalid credentials') ||
-        errorMessage.includes('Invalid Credentials') ||
-        responseData.error?.code === 401
-
-      if (isAuthError) {
-        // Refresh Token이 있으면 자동 갱신 시도
-        if (refreshToken && oauthClientId && oauthClientSecret) {
-          console.log('[Calendar Create API] Access token expired, attempting to refresh...')
-          const refreshed = await refreshAccessToken(refreshToken, oauthClientId, oauthClientSecret)
-
-          if (refreshed?.accessToken) {
-            // 새 토큰으로 재시도
-            console.log('[Calendar Create API] Retrying with refreshed token...')
-            const retryResponse = await fetch(calendarUrl, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${refreshed.accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(eventData)
-            })
-
-            const retryData = await retryResponse.json()
-
-            if (retryResponse.ok) {
-              console.log('[Calendar Create API] Event created successfully with refreshed token:', retryData.id)
-              return NextResponse.json({
-                success: true,
-                message: '일정이 성공적으로 생성되었습니다. (토큰 자동 갱신됨)',
-                eventId: retryData.id,
-                event: {
-                  id: retryData.id,
-                  summary: retryData.summary,
-                  start: retryData.start?.dateTime || retryData.start?.date,
-                  end: retryData.end?.dateTime || retryData.end?.date,
-                  htmlLink: retryData.htmlLink
-                },
-                newAccessToken: refreshed.accessToken // 새 토큰 반환하여 저장 가능
-              })
-            } else {
-              refreshErrorDetail = retryData;
-            }
-          } else if (refreshed?.error) {
-            refreshErrorDetail = refreshed.error;
-          }
+    // 4. 만약 토큰 만료 에러(401)가 나면 한 번 더 리프레시 시도
+    if (response.status === 401 && finalRefreshToken && finalClientId && finalClientSecret) {
+      console.log('[Calendar Create API] Access token expired during API call, retrying refresh...');
+      const refreshed = await refreshAccessToken(finalRefreshToken, finalClientId, finalClientSecret);
+      
+      if (refreshed?.accessToken) {
+        console.log('[Calendar Create API] Retrying API call with newly refreshed token...');
+        response = await makeRequest(refreshed.accessToken);
+        responseData = await response.json();
+        
+        if (response.ok) {
+          return NextResponse.json({
+            success: true,
+            message: '일정이 성공적으로 생성되었습니다. (토큰 자동 갱신됨)',
+            eventId: responseData.id,
+            newAccessToken: refreshed.accessToken
+          });
         }
-
-        // Refresh Token으로도 실패하거나 Refresh Token이 없는 경우
-        return NextResponse.json(
-          {
-            error: '인증 실패',
-            details: refreshErrorDetail ? JSON.stringify(refreshErrorDetail) : 'OAuth 2.0 액세스 토큰이 만료되었거나 유효하지 않습니다.',
-            message: refreshToken
-              ? `Refresh Token으로 자동 갱신을 시도했지만 실패했습니다. (Error: ${refreshErrorDetail?.error || 'unknown'})`
-              : '액세스 토큰이 만료되었습니다. Refresh Token을 설정하면 자동으로 갱신됩니다.',
-            instructions: [
-              '1. 구글 클라우드 콘솔에서 "앱 게시(Publish App)" 상태인지 확인',
-              '2. 관리자 페이지에서 다시 한번 "구글 캘린더 연동" 클릭',
-              '3. 완료 후 "캘린더 설정 저장" 클릭'
-            ],
-            code: responseData.error?.code || response.status
-          },
-          { status: 401 }
-        )
       }
+      refreshErrorDetail = refreshed?.error || responseData;
+    }
 
+    // 5. 최종 결과 처리
+    if (!response.ok) {
+      console.error('[Calendar Create API] Final API Call failed:', responseData);
       return NextResponse.json(
         {
-          error: '일정 생성 실패',
-          details: errorMessage,
-          code: responseData.error?.code || response.status
+          error: '인증 실패',
+          details: `Google API Error: ${JSON.stringify(responseData)}`,
+          message: '인증 정보가 만료되었거나 올바르지 않습니다. 다시 연동해 주세요.',
+          instructions: [
+            '1. 구글 클라우드 콘솔에서 "앱 게시" 상태인지 확인',
+            '2. 관리자 페이지에서 "구글 캘린더 연동" 다시 수행',
+            '3. "캘린더 설정 저장" 클릭'
+          ]
         },
-        { status: response.status }
-      )
+        { status: 401 }
+      );
     }
-
-    console.log('[Calendar Create API] Event created successfully:', responseData.id)
 
     return NextResponse.json({
       success: true,
       message: '일정이 성공적으로 생성되었습니다.',
-      eventId: responseData.id,
-      event: {
-        id: responseData.id,
-        summary: responseData.summary,
-        start: responseData.start?.dateTime || responseData.start?.date,
-        end: responseData.end?.dateTime || responseData.end?.date,
-        htmlLink: responseData.htmlLink
-      }
-    })
+      eventId: responseData.id
+    });
 
   } catch (error) {
-    console.error('[Calendar Create API] Error:', error)
+    console.error('[Calendar Create API] Unexpected Server Error:', error);
     return NextResponse.json(
-      {
-        error: '일정 생성 중 오류가 발생했습니다',
-        details: error instanceof Error ? error.message : '알 수 없는 오류'
-      },
+      { error: '서버 내부 오류가 발생했습니다', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
-    )
+    );
   }
 }
