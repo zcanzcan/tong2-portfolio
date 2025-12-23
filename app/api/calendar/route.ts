@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     let accessToken: string | null = null
 
     if (refreshToken && clientId && clientSecret) {
-      console.log('[Calendar API] Found OAuth credentials in environment variables, attempting to refresh token...')
+      console.log('[Calendar API] Attempting to refresh token...')
       try {
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
@@ -72,8 +72,8 @@ export async function GET(request: Request) {
           accessToken = tokenData.access_token
           console.log('[Calendar API] Successfully refreshed access token')
         } else {
-          const errorText = await tokenResponse.text()
-          console.error('[Calendar API] Failed to refresh token:', errorText)
+          const errorData = await tokenResponse.json().catch(() => ({}));
+          console.error('[Calendar API] Failed to refresh token:', errorData)
         }
       } catch (error) {
         console.error('[Calendar API] Error refreshing token:', error)

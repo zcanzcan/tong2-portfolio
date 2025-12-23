@@ -4,12 +4,9 @@ import { getServiceSupabase } from '@/lib/supabase-client'
 export const dynamic = 'force-dynamic'
 
 // Refresh Token을 사용하여 새 액세스 토큰 발급
-async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<{ accessToken: string; expiresIn: number } | null> {
+async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<{ accessToken: string; expiresIn: number; error?: any } | null> {
   try {
-    console.log('[Calendar Create API] Refreshing token with:', { 
-      clientId: clientId?.substring(0, 10) + '...',
-      hasRefreshToken: !!refreshToken 
-    });
+    console.log('[Calendar Create API] Refreshing token...');
 
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -24,13 +21,13 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
       }),
     })
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('[Calendar Create API] Token refresh failed response:', errorData)
-      return null
+      console.error('[Calendar Create API] Token refresh failed response:', data)
+      return { accessToken: '', expiresIn: 0, error: data };
     }
 
-    const data = await response.json()
     return {
       accessToken: data.access_token,
       expiresIn: data.expires_in || 3600, // 기본 1시간
@@ -45,6 +42,11 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    
+    // DB에서 구글 설정 가져오기 (가장 정확한 소스)
+    const supabase = getServiceSupabase();
+    const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
+
     let {
       calendarId,
       accessToken,
@@ -58,15 +60,11 @@ export async function POST(request: Request) {
       location
     } = body
 
-    // DB에서 구글 설정 가져오기
-    const supabase = getServiceSupabase();
-    const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
-
-    // Fallback order: Body > Database > Environment Variables
-    if (!calendarId) calendarId = calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID
-    if (!oauthClientId) oauthClientId = calendarConfig?.oauth_client_id || process.env.GOOGLE_CLIENT_ID
-    if (!oauthClientSecret) oauthClientSecret = calendarConfig?.oauth_client_secret || process.env.GOOGLE_CLIENT_SECRET
-    if (!refreshToken) refreshToken = calendarConfig?.refresh_token || process.env.GOOGLE_REFRESH_TOKEN
+    // DB 데이터가 있으면 우선적으로 사용 (클라이언트의 오래된 데이터 방지)
+    calendarId = calendarId || calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID
+    oauthClientId = calendarConfig?.oauth_client_id || oauthClientId || process.env.GOOGLE_CLIENT_ID
+    oauthClientSecret = calendarConfig?.oauth_client_secret || oauthClientSecret || process.env.GOOGLE_CLIENT_SECRET
+    refreshToken = calendarConfig?.refresh_token || refreshToken || process.env.GOOGLE_REFRESH_TOKEN
 
     if (!calendarId || !summary || !startDateTime) {
       return NextResponse.json(
@@ -75,16 +73,18 @@ export async function POST(request: Request) {
       )
     }
 
-    // OAuth 2.0 액세스 토큰 필요 (환경 변수 또는 요청에서 받은 토큰)
-    let token = accessToken || process.env.GOOGLE_CALENDAR_ACCESS_TOKEN
+    // OAuth 2.0 액세스 토큰 (요청에 있으면 사용, 없으면 DB/환경변수에서 갱신 시도)
+    let token = accessToken;
+    let refreshErrorDetail = null;
 
-    // Refresh Token이 있고 액세스 토큰이 없거나 만료된 경우 자동 갱신 시도
+    // 토큰이 없거나 만료된 것으로 의심될 때 갱신 시도
     if (!token && refreshToken && oauthClientId && oauthClientSecret) {
-      console.log('[Calendar Create API] Access token not found, attempting to refresh...')
+      console.log('[Calendar Create API] Access token not found in request, attempting refresh with DB config...')
       const refreshed = await refreshAccessToken(refreshToken, oauthClientId, oauthClientSecret)
-      if (refreshed) {
+      if (refreshed?.accessToken) {
         token = refreshed.accessToken
-        console.log('[Calendar Create API] Access token refreshed successfully')
+      } else if (refreshed?.error) {
+        refreshErrorDetail = refreshed.error;
       }
     }
 
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
           console.log('[Calendar Create API] Access token expired, attempting to refresh...')
           const refreshed = await refreshAccessToken(refreshToken, oauthClientId, oauthClientSecret)
 
-          if (refreshed) {
+          if (refreshed?.accessToken) {
             // 새 토큰으로 재시도
             console.log('[Calendar Create API] Retrying with refreshed token...')
             const retryResponse = await fetch(calendarUrl, {
@@ -197,8 +197,10 @@ export async function POST(request: Request) {
                 newAccessToken: refreshed.accessToken // 새 토큰 반환하여 저장 가능
               })
             } else {
-              console.error('[Calendar Create API] Retry failed:', retryData);
+              refreshErrorDetail = retryData;
             }
+          } else if (refreshed?.error) {
+            refreshErrorDetail = refreshed.error;
           }
         }
 
@@ -206,22 +208,14 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: '인증 실패',
-            details: 'OAuth 2.0 액세스 토큰이 만료되었거나 유효하지 않습니다.',
+            details: refreshErrorDetail ? JSON.stringify(refreshErrorDetail) : 'OAuth 2.0 액세스 토큰이 만료되었거나 유효하지 않습니다.',
             message: refreshToken
-              ? 'Refresh Token으로 자동 갱신을 시도했지만 실패했습니다. Refresh Token이 유효한지 확인해주세요.'
-              : '액세스 토큰은 보통 1시간 후 만료됩니다. Refresh Token을 설정하면 자동으로 갱신됩니다.',
-            instructions: refreshToken ? [
-              '1. 관리자 페이지에서 Refresh Token 확인',
-              '2. OAuth 2.0 Playground에서 새 Refresh Token 발급',
-              '3. 새 Refresh Token을 입력하고 저장'
-            ] : [
-              '1. https://developers.google.com/oauthplayground/ 접속',
-              '2. 왼쪽에서 "Calendar API v3" > "https://www.googleapis.com/calendar/v3/calendars/.../events" 선택',
-              '3. "Authorize APIs" 클릭하여 인증',
-              '4. "Exchange authorization code for tokens" 클릭',
-              '5. 생성된 "Refresh token"을 복사하여 관리자 페이지에 붙여넣기 (권장)',
-              '6. 또는 "Access token"을 복사하여 붙여넣기',
-              '7. "캘린더 설정 저장" 클릭'
+              ? `Refresh Token으로 자동 갱신을 시도했지만 실패했습니다. (Error: ${refreshErrorDetail?.error || 'unknown'})`
+              : '액세스 토큰이 만료되었습니다. Refresh Token을 설정하면 자동으로 갱신됩니다.',
+            instructions: [
+              '1. 구글 클라우드 콘솔에서 "앱 게시(Publish App)" 상태인지 확인',
+              '2. 관리자 페이지에서 다시 한번 "구글 캘린더 연동" 클릭',
+              '3. 완료 후 "캘린더 설정 저장" 클릭'
             ],
             code: responseData.error?.code || response.status
           },

@@ -35,7 +35,10 @@ export async function POST(request: Request) {
         }
 
         const supabase = getServiceSupabase();
-        const sanitizedData = sanitizeInput(data);
+        
+        // 중요: 캘린더나 비밀값 관련 섹션은 Sanitization(데이터 정제)을 건너뜁니다.
+        // 토큰이나 비밀키에 포함된 특수문자가 필터링되는 것을 방지하기 위함입니다.
+        const sanitizedData = section === 'calendar' ? data : sanitizeInput(data);
 
         let success = false;
         let errorMsg = '';
