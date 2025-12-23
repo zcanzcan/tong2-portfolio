@@ -6,17 +6,7 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
         const supabase = getServiceSupabase();
         
         // 여러 테이블을 병렬로 조회
-        const [
-            { data: profile },
-            { data: heroButtons },
-            { data: experiences },
-            { data: publications },
-            { data: projects },
-            { data: socialLinks },
-            { data: blogInfo },
-            { data: skills },
-            { data: certifications }
-        ] = await Promise.all([
+        const results = await Promise.all([
             supabase.from('profile').select('*').limit(1).maybeSingle(),
             supabase.from('hero_buttons').select('*').order('sort_order', { ascending: true }),
             supabase.from('experiences').select('*').order('sort_order', { ascending: true }),
@@ -25,8 +15,20 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
             supabase.from('social_links').select('*').order('sort_order', { ascending: true }),
             supabase.from('blog_info').select('*').limit(1).maybeSingle(),
             supabase.from('skills').select('*').order('sort_order', { ascending: true }),
-            supabase.from('certifications').select('*').order('sort_order', { ascending: true })
+            supabase.from('certifications').select('*').order('sort_order', { ascending: true }),
+            supabase.from('calendar_config').select('*').limit(1).maybeSingle()
         ]);
+
+        const profile = results[0].data;
+        const heroButtons = results[1].data;
+        const experiences = results[2].data;
+        const publications = results[3].data;
+        const projects = results[4].data;
+        const socialLinks = results[5].data;
+        const blogInfo = results[6].data;
+        const skills = results[7].data;
+        const certifications = results[8].data;
+        const calendarConfig = results[9].data;
 
         const portfolioData: any = {
             profile: profile ? {
@@ -107,11 +109,11 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
                 url: c.url
             })),
             calendar: {
-                calendarId: process.env.GOOGLE_CALENDAR_ID || '1fda3a586c34793850a168648de641a6f19ef23b1a278aba12fd53837f040a81@group.calendar.google.com',
-                apiKey: process.env.GOOGLE_CALENDAR_API_KEY || 'AIzaSyCnYiuPZ2BSSx88j7eJjQ-WkXV5aIiDQ8E',
-                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-                oauthClientId: process.env.GOOGLE_CLIENT_ID,
-                oauthClientSecret: process.env.GOOGLE_CLIENT_SECRET
+                calendarId: calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID || '1fda3a586c34793850a168648de641a6f19ef23b1a278aba12fd53837f040a81@group.calendar.google.com',
+                apiKey: calendarConfig?.api_key || process.env.GOOGLE_CALENDAR_API_KEY || 'AIzaSyCnYiuPZ2BSSx88j7eJjQ-WkXV5aIiDQ8E',
+                refreshToken: calendarConfig?.refresh_token || process.env.GOOGLE_REFRESH_TOKEN,
+                oauthClientId: calendarConfig?.oauth_client_id || process.env.GOOGLE_CLIENT_ID,
+                oauthClientSecret: calendarConfig?.oauth_client_secret || process.env.GOOGLE_CLIENT_SECRET
             }
         };
 
