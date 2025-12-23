@@ -107,8 +107,8 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
                 url: c.url
             })),
             calendar: {
-                calendarId: process.env.GOOGLE_CALENDAR_ID,
-                apiKey: process.env.GOOGLE_CALENDAR_API_KEY,
+                calendarId: process.env.GOOGLE_CALENDAR_ID || '1fda3a586c34793850a168648de641a6f19ef23b1a278aba12fd53837f040a81@group.calendar.google.com',
+                apiKey: process.env.GOOGLE_CALENDAR_API_KEY || 'AIzaSyCnYiuPZ2BSSx88j7eJjQ-WkXV5aIiDQ8E',
                 refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
                 oauthClientId: process.env.GOOGLE_CLIENT_ID,
                 oauthClientSecret: process.env.GOOGLE_CLIENT_SECRET
