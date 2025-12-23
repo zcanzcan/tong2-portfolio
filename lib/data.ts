@@ -17,13 +17,13 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
             { data: skills },
             { data: certifications }
         ] = await Promise.all([
-            supabase.from('profile').select('*').single(),
+            supabase.from('profile').select('*').limit(1).maybeSingle(),
             supabase.from('hero_buttons').select('*').order('sort_order', { ascending: true }),
             supabase.from('experiences').select('*').order('sort_order', { ascending: true }),
             supabase.from('publications').select('*').order('sort_order', { ascending: true }),
             supabase.from('projects').select('*').order('sort_order', { ascending: true }),
             supabase.from('social_links').select('*').order('sort_order', { ascending: true }),
-            supabase.from('blog_info').select('*').single(),
+            supabase.from('blog_info').select('*').limit(1).maybeSingle(),
             supabase.from('skills').select('*').order('sort_order', { ascending: true }),
             supabase.from('certifications').select('*').order('sort_order', { ascending: true })
         ]);
@@ -106,15 +106,14 @@ export async function getPortfolioData(): Promise<PortfolioData | null> {
                 date: c.date,
                 url: c.url
             })),
-            calendar: {}
+            calendar: {
+                calendarId: process.env.GOOGLE_CALENDAR_ID,
+                apiKey: process.env.GOOGLE_CALENDAR_API_KEY,
+                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+                oauthClientId: process.env.GOOGLE_CLIENT_ID,
+                oauthClientSecret: process.env.GOOGLE_CLIENT_SECRET
+            }
         };
-
-        // Environment Variables Override (for Calendar)
-        if (process.env.GOOGLE_REFRESH_TOKEN) portfolioData.calendar.refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-        if (process.env.GOOGLE_CLIENT_ID) portfolioData.calendar.oauthClientId = process.env.GOOGLE_CLIENT_ID;
-        if (process.env.GOOGLE_CLIENT_SECRET) portfolioData.calendar.oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-        if (process.env.GOOGLE_CALENDAR_API_KEY) portfolioData.calendar.apiKey = process.env.GOOGLE_CALENDAR_API_KEY;
-        if (process.env.GOOGLE_CALENDAR_ID) portfolioData.calendar.calendarId = process.env.GOOGLE_CALENDAR_ID;
 
         if (portfolioData.calendar.refreshToken && (!portfolioData.calendar.accessToken || portfolioData.calendar.accessToken === '')) {
             portfolioData.calendar.accessToken = 'managed_by_server';
