@@ -3,10 +3,14 @@ import { getServiceSupabase } from '@/lib/supabase-client'
 
 export const dynamic = 'force-dynamic'
 
-// ... refreshAccessToken 함수 유지 ...
+// Refresh Token을 사용하여 새 액세스 토큰 발급
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<{ accessToken: string; expiresIn: number } | null> {
-// ... (생략된 부분은 동일)
   try {
+    console.log('[Calendar Create API] Refreshing token with:', { 
+      clientId: clientId?.substring(0, 10) + '...',
+      hasRefreshToken: !!refreshToken 
+    });
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -22,7 +26,7 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('[Calendar Create API] Token refresh failed:', errorData)
+      console.error('[Calendar Create API] Token refresh failed response:', errorData)
       return null
     }
 
@@ -192,6 +196,8 @@ export async function POST(request: Request) {
                 },
                 newAccessToken: refreshed.accessToken // 새 토큰 반환하여 저장 가능
               })
+            } else {
+              console.error('[Calendar Create API] Retry failed:', retryData);
             }
           }
         }
@@ -259,4 +265,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
