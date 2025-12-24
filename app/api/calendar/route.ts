@@ -12,12 +12,13 @@ export async function GET(request: Request) {
     const calendarIdParam = searchParams.get('calendarId')
     const apiKeyParam = searchParams.get('apiKey')
 
-    // 0. DB에서 구글 설정 가져오기 (가장 정확한 정보)
+    // 0. DB에서 구글 설정 가져오기
     const supabase = getServiceSupabase();
     const { data: calendarConfig } = await supabase.from('calendar_config').select('*').limit(1).maybeSingle();
 
-    // 설정값 확정 (DB > 요청 파라미터 > 환경 변수)
-    const calendarId = (calendarConfig?.calendar_id || calendarIdParam || process.env.GOOGLE_CALENDAR_ID || '').trim();
+    // 우선순위: 요청 파라미터 > DB 데이터 > 환경 변수
+    // (클라이언트가 연동 직후 최신 값을 보내는 경우를 대비)
+    const calendarId = (calendarIdParam || calendarConfig?.calendar_id || process.env.GOOGLE_CALENDAR_ID || '').trim();
     const apiKey = (apiKeyParam || calendarConfig?.api_key || process.env.GOOGLE_CALENDAR_API_KEY || '').trim();
     const refreshToken = (calendarConfig?.refresh_token || process.env.GOOGLE_REFRESH_TOKEN || '').trim();
     const clientId = (calendarConfig?.oauth_client_id || process.env.GOOGLE_CLIENT_ID || '').trim();
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
 
     let accessToken: string | null = null;
 
-    // 1. OAuth 토큰 갱신 시도 (리프레시 토큰이 있는 경우)
+    // 1. OAuth 토큰 갱신 시도
     if (refreshToken && clientId && clientSecret) {
       try {
         const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -57,13 +58,15 @@ export async function GET(request: Request) {
         if (tokenRes.ok) {
           const tokenData = await tokenRes.json();
           accessToken = tokenData.access_token;
+        } else {
+          console.error('[Calendar API] Token refresh failed for GET:', await tokenRes.json().catch(() => ({})));
         }
       } catch (e) {
         console.error('[Calendar API] Token refresh error:', e);
       }
     }
 
-    // 2. Google API 호출 (Access Token 우선, 없으면 API Key)
+    // 2. Google API 호출
     const eventsParams = new URLSearchParams({
       timeMin: startOfMonth,
       timeMax: endOfMonth,
