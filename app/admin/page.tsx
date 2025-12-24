@@ -1507,9 +1507,9 @@ export default function AdminPage() {
         const handleProjectSubmit = async (e: React.FormEvent) => {
             e.preventDefault()
             const method = editingProjectIndex === -1 ? 'POST' : 'PUT'
-            const body = editingProjectIndex === -1
+            const body = method === 'POST'
                 ? editingProject
-                : { index: editingProjectIndex, project: editingProject }
+                : { id: editingProject.id, project: editingProject }
 
             try {
                 const res = await fetch('/api/projects', {
@@ -1534,11 +1534,12 @@ export default function AdminPage() {
 
         const handleDeleteProject = async (index: number) => {
             if (!confirm('정말 삭제하시겠습니까?')) return
+            const projectToDelete = projects[index];
             try {
                 const res = await fetch('/api/projects', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ index })
+                    body: JSON.stringify({ id: projectToDelete.id })
                 })
                 const result = await res.json()
                 if (res.ok) {
@@ -1669,7 +1670,7 @@ export default function AdminPage() {
                     </h3>
                     <button
                         onClick={() => {
-                            setEditingProject({ id: Date.now(), title: '', description: '', image: '', link: '', tags: [] })
+                            setEditingProject({ title: '', description: '', image: '', link: '', tags: [] })
                             setEditingProjectIndex(-1)
                         }}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white text-sm flex items-center gap-1"
