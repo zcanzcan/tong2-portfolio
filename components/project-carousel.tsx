@@ -66,7 +66,7 @@ export function ProjectCarousel({ projects }: ProjectCarouselProps) {
 
   return (
     <div className="relative">
-      <div className="relative h-[420px] overflow-hidden rounded-3xl">
+      <div className="relative min-h-[500px] overflow-hidden rounded-3xl">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={currentIndex}
@@ -85,9 +85,9 @@ export function ProjectCarousel({ projects }: ProjectCarouselProps) {
             onDragEnd={handleDragEnd}
             className="absolute inset-0"
           >
-            <div className="h-full rounded-3xl overflow-hidden bg-white/5 border border-white/10">
+            <div className="h-full rounded-3xl overflow-hidden bg-white/5 border border-white/10 flex flex-col">
               {/* Image Container */}
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-44 overflow-hidden flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
                 <Image
                   src={projects[currentIndex].image || "/placeholder.svg"}
@@ -99,36 +99,38 @@ export function ProjectCarousel({ projects }: ProjectCarouselProps) {
               </div>
 
               {/* Content */}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-3">
+              <div className="p-5 flex flex-col flex-grow">
+                <h3 className="text-lg font-bold text-white mb-2 line-clamp-1">
                   {projects[currentIndex].title}
                 </h3>
 
-                <p className="text-white/60 text-sm mb-4">
+                <p className="text-white/60 text-xs mb-3 line-clamp-4 overflow-y-auto">
                   {projects[currentIndex].description}
                 </p>
 
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-1.5 mb-4">
                   {projects[currentIndex].tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 text-xs rounded-md bg-white/5 text-white/80 border border-white/5"
+                      className="px-2 py-0.5 text-[10px] rounded-md bg-white/5 text-white/70 border border-white/5"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
 
-                <Link
-                  href={projects[currentIndex].link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium hover:bg-cyan-500 hover:border-cyan-500 hover:text-black transition-all duration-300 min-h-[44px] ${!projects[currentIndex].link ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
-                >
-                  프로젝트 보기
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
+                <div className="mt-auto">
+                  <Link
+                    href={projects[currentIndex].link || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className={`inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-cyan-500/10 backdrop-blur-md border border-cyan-500/20 text-cyan-400 font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300 min-h-[48px] ${!projects[currentIndex].link ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`}
+                  >
+                    프로젝트 보기
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>
