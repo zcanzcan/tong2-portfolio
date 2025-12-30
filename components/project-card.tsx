@@ -38,11 +38,12 @@ export function ProjectCard({ title, description, tags, image, link }: ProjectCa
           className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700"
         />
 
-        {/* View Project Button - Appears on Hover */}
         <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <Link
-            href={link}
-            className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium hover:bg-cyan-500 hover:border-cyan-500 hover:text-black transition-all duration-300 transform translate-y-4 group-hover:translate-y-0"
+            href={link || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium hover:bg-cyan-500 hover:border-cyan-500 hover:text-black transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 ${!link ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
           >
             {t('view-project', '프로젝트 보기', 'View Project')}
             <ArrowUpRight className="w-4 h-4" />

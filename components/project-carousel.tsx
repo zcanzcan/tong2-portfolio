@@ -120,8 +120,11 @@ export function ProjectCarousel({ projects }: ProjectCarouselProps) {
                 </div>
 
                 <Link
-                  href={projects[currentIndex].link}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium hover:bg-cyan-500 hover:border-cyan-500 hover:text-black transition-all duration-300 min-h-[44px]"
+                  href={projects[currentIndex].link || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium hover:bg-cyan-500 hover:border-cyan-500 hover:text-black transition-all duration-300 min-h-[44px] ${!projects[currentIndex].link ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                 >
                   프로젝트 보기
                   <ArrowUpRight className="w-4 h-4" />
