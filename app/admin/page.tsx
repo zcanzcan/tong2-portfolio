@@ -72,28 +72,6 @@ export default function AdminPage() {
             alert('✅ Google Calendar 연결이 완료되었습니다! 토큰이 자동으로 저장되었습니다.')
             // URL에서 파라미터 제거
             window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
-        } else if (success === 'tokens_received') {
-            // 토큰을 받았지만 저장 실패한 경우 (Vercel 환경)
-            const accessToken = params.get('accessToken')
-            const refreshToken = params.get('refreshToken')
-            const clientId = params.get('clientId')
-            const clientSecret = params.get('clientSecret')
-
-            if (accessToken || refreshToken) {
-                // 캘린더 상태 업데이트
-                setCalendar({
-                    ...calendar,
-                    oauthClientId: clientId || calendar.oauthClientId,
-                    oauthClientSecret: clientSecret || calendar.oauthClientSecret,
-                    accessToken: accessToken || calendar.accessToken,
-                    refreshToken: refreshToken || calendar.refreshToken
-                })
-
-                alert('✅ 토큰을 성공적으로 받았습니다!\n\n"캘린더 설정 저장" 버튼을 클릭하여 저장해주세요.')
-            }
-
-            // URL에서 파라미터 제거
-            window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
         } else if (error) {
             const errorMessage = message || '오류가 발생했습니다.'
             const details = params.get('details') || ''
@@ -114,6 +92,43 @@ export default function AdminPage() {
             window.history.replaceState({}, '', window.location.pathname + (activeTab ? `?tab=${activeTab}` : ''))
         }
     }, [])
+
+    // URL 파라미터 감시 및 자동 저장 (Google Calendar 토큰 등)
+    useEffect(() => {
+        if (!isLoading) {
+            const params = new URLSearchParams(window.location.search)
+            const success = params.get('success')
+
+            if (success === 'tokens_received') {
+                const accessToken = params.get('accessToken')
+                const refreshToken = params.get('refreshToken')
+                const clientId = params.get('clientId')
+                const clientSecret = params.get('clientSecret')
+
+                if (accessToken || refreshToken) {
+                    const updatedCalendar = {
+                        ...calendar,
+                        oauthClientId: clientId || calendar.oauthClientId,
+                        oauthClientSecret: clientSecret || calendar.oauthClientSecret,
+                        accessToken: accessToken || calendar.accessToken,
+                        refreshToken: refreshToken || calendar.refreshToken
+                    }
+
+                    // 캘린더 상태 업데이트
+                    setCalendar(updatedCalendar)
+
+                    // Vercel 등 읽기 전용 환경을 위해 DB에 자동 저장
+                    console.log('[Admin] Auto-saving tokens received from callback')
+                    handleUpdate('calendar', updatedCalendar, true).then(() => {
+                        alert('✅ Google Calendar 연결이 완료되어 토큰이 자동으로 저장되었습니다!')
+                    })
+                }
+
+                // 파라미터 제거하여 중복 실행 방지
+                window.history.replaceState({}, '', window.location.pathname + '?tab=calendar')
+            }
+        }
+    }, [isLoading, calendar])
 
     const fetchAllData = async () => {
         setIsLoading(true)
