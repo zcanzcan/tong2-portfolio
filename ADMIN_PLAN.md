@@ -7,9 +7,7 @@ Develop a comprehensive admin page for the developer portfolio to manage dynamic
 
 ### 1. Authentication
 - **Route**: `/admin`
-- **Credentials**:
-  - ID: `admin`
-  - Password: `qor011zcan!`
+- **Credentials**: Managed via environment variables (`ADMIN_ID`, `ADMIN_PASSWORD`)
 - **UI**:
   - Subtle login button next to "Coffee Chat" in Hero section.
   - Error message for incorrect credentials.

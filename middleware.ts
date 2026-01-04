@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
     // API 라우트에 Rate Limiting 적용
     if (pathname.startsWith('/api/')) {
         const clientIP = getClientIP(request)
-        
+
         // 업로드 API는 더 엄격한 제한
         const isUploadAPI = pathname.includes('/upload')
         const maxRequests = isUploadAPI ? 10 : 100
@@ -33,11 +33,11 @@ export function middleware(request: NextRequest) {
 
         if (!rateLimit.allowed) {
             return NextResponse.json(
-                { 
+                {
                     error: 'Too many requests. Please try again later.',
                     retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
                 },
-                { 
+                {
                     status: 429,
                     headers: {
                         'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
@@ -58,10 +58,17 @@ export function middleware(request: NextRequest) {
 
     // Admin 라우트 보호
     if (pathname.startsWith('/admin')) {
-        const adminSession = request.cookies.get('admin_session')
+        const adminSession = request.cookies.get('admin_session')?.value
+        const ADMIN_ID = process.env.ADMIN_ID
+        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+        const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-dev'
 
-        if (!adminSession) {
-            // Redirect to home page if not authenticated
+        const expectedSessionValue = ADMIN_ID && ADMIN_PASSWORD
+            ? btoa(`${ADMIN_ID}:${ADMIN_PASSWORD}:${sessionSecret}`).substring(0, 32)
+            : null
+
+        if (!adminSession || adminSession !== expectedSessionValue) {
+            // Redirect to home page if not authenticated or session is invalid
             return NextResponse.redirect(new URL('/', request.url))
         }
 

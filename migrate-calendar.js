@@ -2,8 +2,13 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
-const supabaseUrl = 'https://ymocsuqxlxmuococqoiw.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltb2NzdXF4bHhtdW9jb2Nxb2l3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjQ5MTgwMCwiZXhwIjoyMDgyMDY3ODAwfQ.f2oKIqzDp-4od1j3QWbuktrqT2cY3eiiJaOVY2VQWkQ';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables. Migration aborted.');
+    process.exit(1);
+}
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function migrateCalendar() {

@@ -16,12 +16,16 @@ export async function POST(request: Request) {
         }
 
         if (id === ADMIN_ID && password === ADMIN_PASSWORD) {
+            // Simple session token based on credentials and a server secret if available
+            const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-dev';
+            const sessionValue = btoa(`${ADMIN_ID}:${ADMIN_PASSWORD}:${sessionSecret}`).substring(0, 32);
+
             // Set a cookie for the session
             const cookieStore = await cookies();
-            cookieStore.set('admin_session', 'true', {
+            cookieStore.set('admin_session', sessionValue, {
                 httpOnly: true,
-                secure: true, // Always secure for Vercel/Production
-                sameSite: 'lax', // Relaxed for better compatibility
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
                 path: '/',
                 maxAge: 60 * 60 * 24 * 7 // 7 days
             });
