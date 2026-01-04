@@ -8,14 +8,23 @@ export const dynamic = 'force-dynamic';
 function isAuthenticated(request: Request): boolean {
     const cookieHeader = request.headers.get('cookie');
     if (!cookieHeader) return false;
-    
+
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
         const [key, value] = cookie.trim().split('=');
         acc[key] = value;
         return acc;
     }, {} as Record<string, string>);
-    
-    return cookies['admin_session'] === 'true';
+
+    const adminSession = cookies['admin_session'];
+    const ADMIN_ID = process.env.ADMIN_ID;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-dev';
+
+    const expectedSessionValue = ADMIN_ID && ADMIN_PASSWORD
+        ? btoa(`${ADMIN_ID}:${ADMIN_PASSWORD}:${sessionSecret}`).substring(0, 32)
+        : null;
+
+    return !!adminSession && adminSession === expectedSessionValue;
 }
 
 export async function POST(request: Request) {
@@ -35,7 +44,7 @@ export async function POST(request: Request) {
         }
 
         const supabase = getServiceSupabase();
-        
+
         // 중요: 캘린더나 비밀값 관련 섹션은 Sanitization(데이터 정제)을 건너뜁니다.
         // 토큰이나 비밀키에 포함된 특수문자가 필터링되는 것을 방지하기 위함입니다.
         const sanitizedData = section === 'calendar' ? data : sanitizeInput(data);
@@ -58,22 +67,22 @@ export async function POST(request: Request) {
                 updated_at: new Date().toISOString()
             };
 
-            const query = existing 
+            const query = existing
                 ? supabase.from('profile').update(profileData).eq('id', existing.id)
                 : supabase.from('profile').insert(profileData);
-            
+
             const { error } = await query;
             if (error) errorMsg = error.message;
             else success = true;
 
         } else if (['experience', 'heroButtons', 'socials', 'publications', 'projects', 'skills', 'certifications'].includes(section)) {
-            const tableName = section === 'experience' ? 'experiences' : 
-                             section === 'heroButtons' ? 'hero_buttons' :
-                             section === 'socials' ? 'social_links' : 
-                             section === 'publications' ? 'publications' : 
-                             section === 'skills' ? 'skills' :
-                             section === 'certifications' ? 'certifications' : 'projects';
-            
+            const tableName = section === 'experience' ? 'experiences' :
+                section === 'heroButtons' ? 'hero_buttons' :
+                    section === 'socials' ? 'social_links' :
+                        section === 'publications' ? 'publications' :
+                            section === 'skills' ? 'skills' :
+                                section === 'certifications' ? 'certifications' : 'projects';
+
             // 1. 기존 데이터 삭제
             await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
             if (Array.isArray(sanitizedData) && sanitizedData.length > 0) {
                 const rowsToInsert = sanitizedData.map((item, index) => {
                     const row: any = { sort_order: index };
-                    
+
                     if (tableName === 'experiences') {
                         row.role = item.role;
                         row.role_en = item.roleEn;
@@ -149,10 +158,10 @@ export async function POST(request: Request) {
                 url: sanitizedData.url
             };
 
-            const query = existing 
+            const query = existing
                 ? supabase.from('blog_info').update(blogData).eq('id', existing.id)
                 : supabase.from('blog_info').insert(blogData);
-            
+
             const { error } = await query;
             if (error) errorMsg = error.message;
             else success = true;
@@ -167,10 +176,10 @@ export async function POST(request: Request) {
                 updated_at: new Date().toISOString()
             };
 
-            const query = existing 
+            const query = existing
                 ? supabase.from('calendar_config').update(calendarData).eq('id', existing.id)
                 : supabase.from('calendar_config').insert(calendarData);
-            
+
             const { error } = await query;
             if (error) errorMsg = error.message;
             else success = true;
