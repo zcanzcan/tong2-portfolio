@@ -14,44 +14,35 @@ interface CalendarEvent {
   description?: string
 }
 
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
+
 export function GoogleCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [calendarId, setCalendarId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { language, t } = useLanguage()
+  const { data: portfolioData } = usePortfolioData()
 
   useEffect(() => {
-    // Get calendar ID from portfolio data
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.calendar?.calendarId) {
-          setCalendarId(data.calendar.calendarId)
-          fetchMonthEvents(data.calendar.calendarId)
-        } else {
-          setLoading(false)
-        }
-      })
-      .catch(console.error)
-  }, [])
+    // Get calendar ID from portfolio data context
+    if (portfolioData?.calendar?.calendarId) {
+      setCalendarId(portfolioData.calendar.calendarId)
+      fetchMonthEvents(portfolioData.calendar.calendarId, portfolioData.calendar.apiKey || '')
+    } else {
+      setLoading(false)
+    }
+  }, [portfolioData])
 
-  const fetchMonthEvents = async (calId: string) => {
+  const fetchMonthEvents = async (calId: string, apiKey: string) => {
     console.log('[GoogleCalendar] ====== FETCH START ======')
     console.log('[GoogleCalendar] Calendar ID:', calId)
 
     try {
       setLoading(true)
 
-      // Get API key from portfolio data if available
-      console.log('[GoogleCalendar] Fetching portfolio data...')
-      const portfolioRes = await fetch('/api/portfolio')
-      const portfolioData = await portfolioRes.json()
-      const apiKey = portfolioData?.calendar?.apiKey || ''
-
       console.log('[GoogleCalendar] Portfolio data:', {
-        hasCalendar: !!portfolioData?.calendar,
-        hasCalendarId: !!portfolioData?.calendar?.calendarId,
+        hasCalendarId: !!calId,
         hasApiKey: !!apiKey,
         apiKeyLength: apiKey.length
       })

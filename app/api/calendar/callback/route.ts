@@ -191,7 +191,7 @@ export async function GET(request: Request) {
       const redirectUrl = new URL('/admin', request.url)
       redirectUrl.searchParams.set('error', 'callback_error')
       redirectUrl.searchParams.set('details', errorMessage)
-      redirectUrl.searchParams.set('stack', errorStack.substring(0, 500))
+      redirectUrl.searchParams.set('stack', (errorStack || '').substring(0, 500))
       redirectUrl.searchParams.set('tab', 'calendar')
 
       console.log('[Calendar Callback API] Redirecting to error page')

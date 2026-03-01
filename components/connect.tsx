@@ -4,23 +4,20 @@ import { useEffect, useState } from "react"
 import { SpotlightCard } from "@/components/spotlight-card"
 import { Github, Linkedin, AtSign, BookText, Link as LinkIcon } from 'lucide-react'
 import Link from "next/link"
-import * as Icons from 'lucide-react'
+import { getIcon as getLucideIcon } from "@/components/icon-map"
+
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function Connect() {
   const [socials, setSocials] = useState<any[]>([])
+  const { data } = usePortfolioData()
 
   useEffect(() => {
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.socials) setSocials(data.socials)
-      })
-      .catch(console.error)
-  }, [])
+    if (data?.socials) setSocials(data.socials)
+  }, [data])
 
   const getIcon = (iconName: string) => {
-    const Icon = (Icons as any)[iconName] || LinkIcon
-    return Icon
+    return getLucideIcon(iconName, LinkIcon)
   }
 
   return (

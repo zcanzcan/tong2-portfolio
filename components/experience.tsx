@@ -5,28 +5,26 @@ import { SpotlightCard } from "@/components/spotlight-card"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLanguage } from "@/contexts/language-context"
 
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
+
 export function Experience() {
   const [experiences, setExperiences] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const { language, t } = useLanguage()
+  const { data } = usePortfolioData()
 
   useEffect(() => {
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.experience) {
-          // Get localized experience data
-          const localized = data.experience.map((exp: any) => ({
-            ...exp,
-            role: language === 'ko' ? exp.role : (exp.roleEn || exp.role),
-            company: language === 'ko' ? exp.company : (exp.companyEn || exp.company),
-            period: language === 'ko' ? exp.period : (exp.periodEn || exp.period)
-          }))
-          setExperiences(localized)
-        }
-      })
-      .catch(console.error)
-  }, [language])
+    if (data?.experience) {
+      // Get localized experience data
+      const localized = data.experience.map((exp: any) => ({
+        ...exp,
+        role: language === 'ko' ? exp.role : (exp.roleEn || exp.role),
+        company: language === 'ko' ? exp.company : (exp.companyEn || exp.company),
+        period: language === 'ko' ? exp.period : (exp.periodEn || exp.period)
+      }))
+      setExperiences(localized)
+    }
+  }, [language, data])
 
   useEffect(() => {
     if (experiences.length === 0) return

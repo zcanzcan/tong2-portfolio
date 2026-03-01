@@ -12,36 +12,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import * as Icons from 'lucide-react'
+import { getIcon } from "@/components/icon-map"
 import { useLanguage } from "@/contexts/language-context"
 import { motion } from "framer-motion"
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function TechStack() {
   const [skills, setSkills] = useState<any[]>([])
   const [certifications, setCertifications] = useState<any[]>([])
   const { language, t } = useLanguage()
+  const { data } = usePortfolioData()
 
   useEffect(() => {
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.skills) setSkills(data.skills)
-        if (data?.certifications) {
-          const localized = data.certifications.map((cert: any) => ({
-            ...cert,
-            name: language === 'ko' ? cert.name : (cert.nameEn || cert.name),
-            issuer: language === 'ko' ? cert.issuer : (cert.issuerEn || cert.issuer)
-          }))
-          setCertifications(localized)
-        }
-      })
-      .catch(console.error)
-  }, [language])
-
-  const getIcon = (iconName: string) => {
-    const Icon = (Icons as any)[iconName] || Code2
-    return Icon
-  }
+    if (data?.skills) setSkills(data.skills)
+    if (data?.certifications) {
+      const localized = data.certifications.map((cert: any) => ({
+        ...cert,
+        name: language === 'ko' ? cert.name : (cert.nameEn || cert.name),
+        issuer: language === 'ko' ? cert.issuer : (cert.issuerEn || cert.issuer)
+      }))
+      setCertifications(localized)
+    }
+  }, [language, data])
 
   return (
     <SpotlightCard className="h-full flex flex-col" spotlightColor="rgba(6, 182, 212, 0.1)">

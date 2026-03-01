@@ -6,9 +6,10 @@ import {
     Save, Plus, Trash2, Edit2, User, Briefcase,
     Code, Folder, BookOpen, Book, ExternalLink,
     Layout, Image as ImageIcon, Link as LinkIcon, ShoppingCart,
-    LogOut, Upload, X, Home, Share2, Calendar as CalendarIcon, Eye, ChevronDown, Award, Terminal, AlertCircle
+    LogOut, Upload, X, Home, Share2, Calendar as CalendarIcon, Eye, ChevronDown, Award, Terminal, AlertCircle,
+    ArrowUp, ArrowDown
 } from 'lucide-react'
-import * as Icons from 'lucide-react'
+import { iconMap } from '@/components/icon-map'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,7 +18,10 @@ import { SpotlightCard } from '@/components/spotlight-card'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { format } from 'date-fns'
+
+const formatDate = (date: Date) => {
+    return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, '0')}월 ${String(date.getDate()).padStart(2, '0')}일`;
+}
 
 export default function AdminPage() {
     const router = useRouter()
@@ -835,7 +839,7 @@ export default function AdminPage() {
                                 className="p-2 bg-white/5 hover:bg-white/10 rounded text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 title="위로 이동"
                             >
-                                <Icons.ArrowUp className="w-4 h-4" />
+                                <ArrowUp className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => {
@@ -850,7 +854,7 @@ export default function AdminPage() {
                                 className="p-2 bg-white/5 hover:bg-white/10 rounded text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 title="아래로 이동"
                             >
-                                <Icons.ArrowDown className="w-4 h-4" />
+                                <ArrowDown className="w-4 h-4" />
                             </button>
                             <div className="w-px bg-white/10 mx-1"></div>
                             <button onClick={() => removeExperience(idx)} className="text-red-400 text-sm hover:text-red-300 hover:bg-red-500/20 px-3 rounded transition-colors flex items-center gap-1">
@@ -1002,7 +1006,6 @@ export default function AdminPage() {
             'VolumeX': '음소거',
             'Sun': '태양',
             'Moon': '달',
-            'Cloud': '구름',
             'CloudRain': '비',
             'CloudSnow': '눈',
             'Wind': '바람',
@@ -1102,7 +1105,7 @@ export default function AdminPage() {
                             <TooltipProvider delayDuration={0}>
                                 <div className="grid grid-cols-6 gap-2">
                                     {commonIcons.map((iconName) => {
-                                        const Icon = (Icons as any)[iconName] || Code
+                                        const Icon = iconMap[iconName] || Code
                                         const description = iconDescriptions[iconName] || iconName
                                         return (
                                             <Tooltip key={iconName}>
@@ -1135,7 +1138,7 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {skills.map((skill, idx) => {
-                        const IconComponent = (Icons as any)[skill.icon] || Code
+                        const IconComponent = iconMap[skill.icon] || Code
                         return (
                             <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center gap-4">
                                 <div className="flex-1 space-y-2">
@@ -1167,7 +1170,7 @@ export default function AdminPage() {
                                                 <TooltipProvider delayDuration={0}>
                                                     <div className="grid grid-cols-4 gap-2">
                                                         {commonIcons.map((iconName) => {
-                                                            const Icon = (Icons as any)[iconName] || Code
+                                                            const Icon = iconMap[iconName] || Code
                                                             const description = iconDescriptions[iconName] || iconName
                                                             return (
                                                                 <Tooltip key={iconName}>
@@ -1389,7 +1392,7 @@ export default function AdminPage() {
                                             className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                             title="위로 이동"
                                         >
-                                            <Icons.ArrowUp className="w-4 h-4" />
+                                            <ArrowUp className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => {
@@ -1404,7 +1407,7 @@ export default function AdminPage() {
                                             className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                             title="아래로 이동"
                                         >
-                                            <Icons.ArrowDown className="w-4 h-4" />
+                                            <ArrowDown className="w-4 h-4" />
                                         </button>
                                         <div className="w-px bg-white/10 mx-1"></div>
                                         <button
@@ -1800,7 +1803,7 @@ export default function AdminPage() {
         const removePurchaseLink = (pubIdx: number, linkIdx: number) => {
             const newPubs = [...publications]
             if (newPubs[pubIdx].purchaseLinks) {
-                newPubs[pubIdx].purchaseLinks = newPubs[pubIdx].purchaseLinks.filter((_, i) => i !== linkIdx)
+                newPubs[pubIdx].purchaseLinks = newPubs[pubIdx].purchaseLinks.filter((_: any, i: number) => i !== linkIdx)
                 setPublications(newPubs)
             }
         }
@@ -2215,7 +2218,7 @@ export default function AdminPage() {
                                             <button className="w-full bg-black/20 border border-white/10 rounded p-2 text-white text-left flex items-center justify-between hover:bg-black/30">
                                                 <span>
                                                     {newEvent.startDate
-                                                        ? format(newEvent.startDate, 'yyyy년 MM월 dd일')
+                                                        ? formatDate(newEvent.startDate)
                                                         : '날짜 선택'}
                                                 </span>
                                                 <CalendarIcon className="w-4 h-4 opacity-50" />
@@ -2271,7 +2274,7 @@ export default function AdminPage() {
                                             <button className="w-full bg-black/20 border border-white/10 rounded p-2 text-white text-left flex items-center justify-between hover:bg-black/30">
                                                 <span>
                                                     {newEvent.endDate
-                                                        ? format(newEvent.endDate, 'yyyy년 MM월 dd일')
+                                                        ? formatDate(newEvent.endDate)
                                                         : '날짜 선택'}
                                                 </span>
                                                 <CalendarIcon className="w-4 h-4 opacity-50" />

@@ -9,11 +9,14 @@ import { StoreLogo, getStoreColor } from "@/components/store-logo"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useLanguage } from "@/contexts/language-context"
 
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
+
 export function FeaturedPublication() {
   const [publications, setPublications] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [previewPublication, setPreviewPublication] = useState<any>(null)
   const { language, t } = useLanguage()
+  const { data } = usePortfolioData()
 
   // previewPublication 상태 변경 추적
   useEffect(() => {
@@ -34,43 +37,19 @@ export function FeaturedPublication() {
   }, [previewPublication])
 
   useEffect(() => {
-    console.log('[FeaturedPublication] useEffect triggered, language:', language)
-    fetch('/api/portfolio')
-      .then(res => {
-        console.log('[FeaturedPublication] API response status:', res.status)
-        return res.json()
-      })
-      .then(data => {
-        console.log('[FeaturedPublication] API response data:', data)
-        console.log('[FeaturedPublication] Publications from API:', data?.publications)
-        if (data?.publications) {
-          const localized = data.publications.map((pub: any) => {
-            console.log('[FeaturedPublication] Processing publication:', {
-              id: pub.id,
-              title: pub.title,
-              purchaseLinks: pub.purchaseLinks,
-              hasPurchaseLinks: !!pub.purchaseLinks,
-              purchaseLinksLength: pub.purchaseLinks?.length || 0
-            })
-            return {
-              ...pub,
-              title: language === 'ko' ? pub.title : (pub.titleEn || pub.title),
-              description: language === 'ko' ? pub.description : (pub.descriptionEn || pub.description),
-              tag: language === 'ko' ? pub.tag : (pub.tagEn || pub.tag),
-              purchaseLinks: pub.purchaseLinks || [] // purchaseLinks 포함
-            }
-          })
-          console.log('[FeaturedPublication] Localized publications:', localized)
-          console.log('[FeaturedPublication] First publication purchaseLinks:', localized[0]?.purchaseLinks)
-          setPublications(localized)
-        } else {
-          console.warn('[FeaturedPublication] No publications found in API response')
+    if (data?.publications) {
+      const localized = data.publications.map((pub: any) => {
+        return {
+          ...pub,
+          title: language === 'ko' ? pub.title : (pub.titleEn || pub.title),
+          description: language === 'ko' ? pub.description : (pub.descriptionEn || pub.description),
+          tag: language === 'ko' ? pub.tag : (pub.tagEn || pub.tag),
+          purchaseLinks: pub.purchaseLinks || [] // purchaseLinks 포함
         }
       })
-      .catch(error => {
-        console.error('[FeaturedPublication] API fetch error:', error)
-      })
-  }, [language])
+      setPublications(localized)
+    }
+  }, [language, data])
 
   if (publications.length === 0) {
     return (

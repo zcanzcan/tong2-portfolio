@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowRight, Download, Mail, Coffee, ExternalLink, Lock } from 'lucide-react'
+import { ArrowRight, Download, Mail, Coffee, ExternalLink, Lock, ChevronDown } from 'lucide-react'
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import * as Icons from 'lucide-react'
 import { useLanguage } from "@/contexts/language-context"
+import { getIcon as getLucideIcon } from "@/components/icon-map"
+
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function HeroCard() {
-  const [data, setData] = useState<any>(null)
+  const { data } = usePortfolioData()
   const [roleIndex, setRoleIndex] = useState(0)
   const [text, setText] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
@@ -56,13 +58,13 @@ export function HeroCard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: adminId, password: adminPassword })
       })
-      const data = await res.json()
+      const authData = await res.json()
 
-      if (data.success) {
+      if (authData.success) {
         setShowLoginDialog(false)
         router.push('/admin')
       } else {
-        setLoginError(data.message || 'ID 또는 비밀번호가 올바르지 않습니다.')
+        setLoginError(authData.message || 'ID 또는 비밀번호가 올바르지 않습니다.')
       }
     } catch (e) {
       setLoginError('오류가 발생했습니다.')
@@ -70,13 +72,6 @@ export function HeroCard() {
       setIsLoggingIn(false)
     }
   }
-
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error)
-  }, [])
 
   // Title typing animation
   useEffect(() => {
@@ -152,7 +147,7 @@ export function HeroCard() {
   }))
 
   const getIcon = (iconName: string) => {
-    const Icon = (Icons as any)[iconName] || ExternalLink
+    const Icon = getLucideIcon(iconName, ExternalLink)
     return <Icon className="w-4 h-4 mr-2" />
   }
 
@@ -223,7 +218,7 @@ export function HeroCard() {
                     >
                       {getIcon(btn.icon)}
                       {btn.text}
-                      <Icons.ChevronDown className="w-4 h-4 ml-2 opacity-50" />
+                      <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-black/90 border-white/10 text-white min-w-[200px]">

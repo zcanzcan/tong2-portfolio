@@ -6,24 +6,22 @@ import { Button } from "@/components/ui/button"
 import { BookText, ExternalLink } from 'lucide-react'
 import { useLanguage } from "@/contexts/language-context"
 
+import { usePortfolioData } from "@/contexts/portfolio-data-context"
+
 export function BlogCard() {
     const [blog, setBlog] = useState<any>(null)
     const { language, t } = useLanguage()
+    const { data } = usePortfolioData()
 
     useEffect(() => {
-        fetch('/api/portfolio')
-            .then(res => res.json())
-            .then(data => {
-                if (data?.blog) {
-                    setBlog({
-                        ...data.blog,
-                        title: language === 'ko' ? data.blog.title : (data.blog.titleEn || data.blog.title),
-                        description: language === 'ko' ? data.blog.description : (data.blog.descriptionEn || data.blog.description)
-                    })
-                }
+        if (data?.blog) {
+            setBlog({
+                ...data.blog,
+                title: language === 'ko' ? data.blog.title : (data.blog.titleEn || data.blog.title),
+                description: language === 'ko' ? data.blog.description : (data.blog.descriptionEn || data.blog.description)
             })
-            .catch(console.error)
-    }, [language])
+        }
+    }, [language, data])
 
     if (!blog) {
         return (
