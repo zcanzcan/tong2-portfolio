@@ -1,7 +1,17 @@
 import { PortfolioData } from '@/types/portfolio';
 import { getServiceSupabase } from './supabase-client';
+import { unstable_cache } from 'next/cache';
 
-export async function getPortfolioData(): Promise<PortfolioData | null> {
+// 캐싱된 데이터 조회 (60초마다 갱신)
+export const getPortfolioData = unstable_cache(
+    async (): Promise<PortfolioData | null> => {
+        return _fetchPortfolioData();
+    },
+    ['portfolio-data'],
+    { revalidate: 60 }
+);
+
+async function _fetchPortfolioData(): Promise<PortfolioData | null> {
     try {
         const supabase = getServiceSupabase();
 

@@ -20,7 +20,15 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   // 서버에서 데이터를 미리 가져와서 클라이언트로 전달
-  const data = await getPortfolioData()
+  let data = null
+  try {
+    data = await getPortfolioData()
+    if (!data) {
+      console.error('[RootLayout] getPortfolioData returned null')
+    }
+  } catch (error) {
+    console.error('[RootLayout] Failed to fetch portfolio data:', error)
+  }
 
   return (
     <html lang="ko">
