@@ -10,11 +10,11 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   spotlightColor?: string
 }
 
-export function SpotlightCard({ 
-  children, 
-  className, 
+export function SpotlightCard({
+  children,
+  className,
   spotlightColor = "rgba(6, 182, 212, 0.15)", // Cyan default
-  ...props 
+  ...props
 }: SpotlightCardProps) {
   const divRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -46,8 +46,12 @@ export function SpotlightCard({
         className
       )}
       variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
+        hidden: { opacity: 0, y: 8 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.25, ease: 'easeOut' }
+        }
       }}
       {...props as any}
     >

@@ -16,14 +16,18 @@ interface ProjectCardProps {
 
 export function ProjectCard({ title, description, tags, image, link }: ProjectCardProps) {
   const { t } = useLanguage()
-  
+
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
+        hidden: { opacity: 0, y: 8 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.25, ease: 'easeOut' }
+        }
       }}
       className="group relative rounded-3xl overflow-hidden bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-colors duration-500"
     >
