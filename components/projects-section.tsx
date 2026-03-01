@@ -1,26 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from "framer-motion"
+import { useMemo } from 'react'
 import { ProjectCard } from "@/components/project-card"
 import { ProjectCarousel } from "@/components/project-carousel"
 import { useLanguage } from "@/contexts/language-context"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function ProjectsSection() {
-    const [projects, setProjects] = useState<any[]>([])
     const { language, t } = useLanguage()
     const { data } = usePortfolioData()
 
-    useEffect(() => {
-        if (data?.projects) {
-            const localized = data.projects.map((proj: any) => ({
-                ...proj,
-                title: language === 'ko' ? proj.title : (proj.titleEn || proj.title),
-                description: language === 'ko' ? proj.description : (proj.descriptionEn || proj.description)
-            }))
-            setProjects(localized)
-        }
+    // 즉시 데이터 가공 (useEffect 대기 없음)
+    const projects = useMemo(() => {
+        if (!data?.projects) return []
+        return data.projects.map((proj: any) => ({
+            ...proj,
+            title: language === 'ko' ? proj.title : (proj.titleEn || proj.title),
+            description: language === 'ko' ? proj.description : (proj.descriptionEn || proj.description)
+        }))
     }, [language, data])
 
     return (

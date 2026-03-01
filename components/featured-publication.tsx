@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Book, ExternalLink, ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import { SpotlightCard } from "@/components/spotlight-card"
@@ -12,7 +12,6 @@ import { useLanguage } from "@/contexts/language-context"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function FeaturedPublication() {
-  const [publications, setPublications] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [previewPublication, setPreviewPublication] = useState<any>(null)
   const { language, t } = useLanguage()
@@ -36,19 +35,16 @@ export function FeaturedPublication() {
     }
   }, [previewPublication])
 
-  useEffect(() => {
-    if (data?.publications) {
-      const localized = data.publications.map((pub: any) => {
-        return {
-          ...pub,
-          title: language === 'ko' ? pub.title : (pub.titleEn || pub.title),
-          description: language === 'ko' ? pub.description : (pub.descriptionEn || pub.description),
-          tag: language === 'ko' ? pub.tag : (pub.tagEn || pub.tag),
-          purchaseLinks: pub.purchaseLinks || [] // purchaseLinks 포함
-        }
-      })
-      setPublications(localized)
-    }
+  // 즉시 데이터를 가공 (useEffect 대기 없음)
+  const publications = useMemo(() => {
+    if (!data?.publications) return []
+    return data.publications.map((pub: any) => ({
+      ...pub,
+      title: language === 'ko' ? pub.title : (pub.titleEn || pub.title),
+      description: language === 'ko' ? pub.description : (pub.descriptionEn || pub.description),
+      tag: language === 'ko' ? pub.tag : (pub.tagEn || pub.tag),
+      purchaseLinks: pub.purchaseLinks || []
+    }))
   }, [language, data])
 
   if (publications.length === 0) {

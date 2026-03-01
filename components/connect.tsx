@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { SpotlightCard } from "@/components/spotlight-card"
 import { Github, Linkedin, AtSign, BookText, Link as LinkIcon } from 'lucide-react'
 import Link from "next/link"
@@ -9,12 +8,8 @@ import { getIcon as getLucideIcon } from "@/components/icon-map"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function Connect() {
-  const [socials, setSocials] = useState<any[]>([])
   const { data } = usePortfolioData()
-
-  useEffect(() => {
-    if (data?.socials) setSocials(data.socials)
-  }, [data])
+  const socials = data?.socials || []
 
   const getIcon = (iconName: string) => {
     return getLucideIcon(iconName, LinkIcon)

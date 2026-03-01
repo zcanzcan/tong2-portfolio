@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { SpotlightCard } from "@/components/spotlight-card"
 import {
   Code2, Globe, Terminal, Layout, Server, Database, Smartphone, Layers, Cpu,
@@ -18,21 +18,17 @@ import { motion } from "framer-motion"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function TechStack() {
-  const [skills, setSkills] = useState<any[]>([])
-  const [certifications, setCertifications] = useState<any[]>([])
   const { language, t } = useLanguage()
   const { data } = usePortfolioData()
 
-  useEffect(() => {
-    if (data?.skills) setSkills(data.skills)
-    if (data?.certifications) {
-      const localized = data.certifications.map((cert: any) => ({
-        ...cert,
-        name: language === 'ko' ? cert.name : (cert.nameEn || cert.name),
-        issuer: language === 'ko' ? cert.issuer : (cert.issuerEn || cert.issuer)
-      }))
-      setCertifications(localized)
-    }
+  const skills = data?.skills || []
+  const certifications = useMemo(() => {
+    if (!data?.certifications) return []
+    return data.certifications.map((cert: any) => ({
+      ...cert,
+      name: language === 'ko' ? cert.name : (cert.nameEn || cert.name),
+      issuer: language === 'ko' ? cert.issuer : (cert.issuerEn || cert.issuer)
+    }))
   }, [language, data])
 
   return (

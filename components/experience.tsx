@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { SpotlightCard } from "@/components/spotlight-card"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLanguage } from "@/contexts/language-context"
@@ -8,23 +8,21 @@ import { useLanguage } from "@/contexts/language-context"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function Experience() {
-  const [experiences, setExperiences] = useState<any[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
   const { language, t } = useLanguage()
   const { data } = usePortfolioData()
 
-  useEffect(() => {
-    if (data?.experience) {
-      // Get localized experience data
-      const localized = data.experience.map((exp: any) => ({
-        ...exp,
-        role: language === 'ko' ? exp.role : (exp.roleEn || exp.role),
-        company: language === 'ko' ? exp.company : (exp.companyEn || exp.company),
-        period: language === 'ko' ? exp.period : (exp.periodEn || exp.period)
-      }))
-      setExperiences(localized)
-    }
+  // 즉시 데이터를 가공하여 초기값으로 사용 (useEffect 대기 없음)
+  const experiences = useMemo(() => {
+    if (!data?.experience) return []
+    return data.experience.map((exp: any) => ({
+      ...exp,
+      role: language === 'ko' ? exp.role : (exp.roleEn || exp.role),
+      company: language === 'ko' ? exp.company : (exp.companyEn || exp.company),
+      period: language === 'ko' ? exp.period : (exp.periodEn || exp.period)
+    }))
   }, [language, data])
+
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     if (experiences.length === 0) return

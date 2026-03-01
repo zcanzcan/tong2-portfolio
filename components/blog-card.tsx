@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { SpotlightCard } from "@/components/spotlight-card"
 import { Button } from "@/components/ui/button"
 import { BookText, ExternalLink } from 'lucide-react'
@@ -9,17 +9,16 @@ import { useLanguage } from "@/contexts/language-context"
 import { usePortfolioData } from "@/contexts/portfolio-data-context"
 
 export function BlogCard() {
-    const [blog, setBlog] = useState<any>(null)
     const { language, t } = useLanguage()
     const { data } = usePortfolioData()
 
-    useEffect(() => {
-        if (data?.blog) {
-            setBlog({
-                ...data.blog,
-                title: language === 'ko' ? data.blog.title : (data.blog.titleEn || data.blog.title),
-                description: language === 'ko' ? data.blog.description : (data.blog.descriptionEn || data.blog.description)
-            })
+    // 즉시 데이터를 가공 (useEffect 대기 없음)
+    const blog = useMemo(() => {
+        if (!data?.blog) return null
+        return {
+            ...data.blog,
+            title: language === 'ko' ? data.blog.title : (data.blog.titleEn || data.blog.title),
+            description: language === 'ko' ? data.blog.description : (data.blog.descriptionEn || data.blog.description)
         }
     }, [language, data])
 
