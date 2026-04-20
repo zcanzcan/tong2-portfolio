@@ -137,8 +137,11 @@ export default function AdminPage() {
     const fetchAllData = async () => {
         setIsLoading(true)
         try {
-            // Fetch Portfolio Data
-            const portRes = await fetch('/api/portfolio')
+            // Fetch Portfolio Data with cache-busting
+            const portRes = await fetch(`/api/portfolio?t=${Date.now()}`, { 
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            })
             if (!portRes.ok) {
                 throw new Error(`포트폴리오 데이터 로딩 실패: ${portRes.status}`)
             }
@@ -162,7 +165,10 @@ export default function AdminPage() {
             }
 
             // Fetch Projects Data
-            const projRes = await fetch('/api/projects')
+            const projRes = await fetch(`/api/projects?t=${Date.now()}`, { 
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            })
             if (!projRes.ok) {
                 throw new Error(`프로젝트 데이터 로딩 실패: ${projRes.status}`)
             }

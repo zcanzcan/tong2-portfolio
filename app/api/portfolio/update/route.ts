@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { sanitizeInput, validateJSONSize } from '@/lib/security';
 
@@ -46,7 +47,6 @@ export async function POST(request: Request) {
         const supabase = getServiceSupabase();
 
         // 중요: 캘린더나 비밀값 관련 섹션은 Sanitization(데이터 정제)을 건너뜁니다.
-        // 토큰이나 비밀키에 포함된 특수문자가 필터링되는 것을 방지하기 위함입니다.
         const sanitizedData = section === 'calendar' ? data : sanitizeInput(data);
 
         let success = false;
@@ -67,45 +67,58 @@ export async function POST(request: Request) {
                 updated_at: new Date().toISOString()
             };
 
+            console.log('[API] Updating profile with robust logic');
+
             const query = existing
                 ? supabase.from('profile').update(profileData).eq('id', existing.id)
                 : supabase.from('profile').insert(profileData);
 
-            const { error } = await query;
-            if (error) errorMsg = error.message;
-            else success = true;
+            const { error, data: updateResult } = await query.select();
+            if (error) {
+                console.error('[API] Profile update error:', error);
+                errorMsg = error.message;
+            } else {
+                console.log('[API] Profile update success');
+                success = true;
+            }
 
         } else if (['experience', 'heroButtons', 'socials', 'publications', 'projects', 'skills', 'certifications'].includes(section)) {
             const tableName = section === 'experience' ? 'experiences' :
-                section === 'heroButtons' ? 'hero_buttons' :
-                    section === 'socials' ? 'social_links' :
-                        section === 'publications' ? 'publications' :
-                            section === 'skills' ? 'skills' :
-                                section === 'certifications' ? 'certifications' : 'projects';
+                             section === 'heroButtons' ? 'hero_buttons' :
+                             section === 'socials' ? 'social_links' :
+                             section === 'publications' ? 'publications' :
+                             section === 'skills' ? 'skills' :
+                             section === 'certifications' ? 'certifications' : 'projects';
 
-            // 1. 기존 데이터 삭제
-            await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            console.log(`[API] Robust update with data integrity for ${tableName}`);
 
-            // 2. 새 데이터 인서트
-            if (Array.isArray(sanitizedData) && sanitizedData.length > 0) {
-                const rowsToInsert = sanitizedData.map((item, index) => {
-                    const row: any = { sort_order: index };
+            if (Array.isArray(sanitizedData)) {
+                // 1. 매핑 및 Upsert 데이터 준비 (ID 보존 필수)
+                const upsertRows = sanitizedData.map((item: any, index: number) => {
+                    const row: any = { 
+                        sort_order: index,
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    if (item.id && typeof item.id === 'string' && item.id.length > 20) {
+                        row.id = item.id;
+                    }
 
                     if (tableName === 'experiences') {
                         row.role = item.role;
-                        row.role_en = item.roleEn;
+                        row.role_en = item.roleEn || item.role_en;
                         row.company = item.company;
-                        row.company_en = item.companyEn;
+                        row.company_en = item.companyEn || item.company_en;
                         row.period = item.period;
-                        row.period_en = item.periodEn;
+                        row.period_en = item.periodEn || item.period_en;
                         row.color = item.color;
                     } else if (tableName === 'hero_buttons') {
                         row.text = item.text;
-                        row.text_en = item.textEn;
+                        row.text_en = item.textEn || item.text_en;
                         row.icon = item.icon;
                         row.url = item.url;
                         row.variant = item.variant;
-                        row.dropdown_items = item.dropdownItems || [];
+                        row.dropdown_items = item.dropdownItems || item.dropdown_items || [];
                     } else if (tableName === 'social_links') {
                         row.name = item.name;
                         row.icon = item.icon;
@@ -113,19 +126,19 @@ export async function POST(request: Request) {
                         row.color = item.color;
                     } else if (tableName === 'publications') {
                         row.tag = item.tag;
-                        row.tag_en = item.tagEn;
+                        row.tag_en = item.tagEn || item.tag_en;
                         row.title = item.title;
-                        row.title_en = item.titleEn;
+                        row.title_en = item.titleEn || item.title_en;
                         row.description = item.description;
-                        row.description_en = item.descriptionEn;
+                        row.description_en = item.descriptionEn || item.description_en;
                         row.image = item.image;
                         row.link = item.link;
-                        row.purchase_links = item.purchaseLinks || [];
+                        row.purchase_links = item.purchaseLinks || item.purchase_links || [];
                     } else if (tableName === 'projects') {
                         row.title = item.title;
-                        row.title_en = item.titleEn;
+                        row.title_en = item.titleEn || item.title_en;
                         row.description = item.description;
-                        row.description_en = item.descriptionEn;
+                        row.description_en = item.descriptionEn || item.description_en;
                         row.link = item.link;
                         row.tags = item.tags || [];
                         row.image = item.image;
@@ -135,18 +148,36 @@ export async function POST(request: Request) {
                         row.color = item.color;
                     } else if (tableName === 'certifications') {
                         row.name = item.name;
-                        row.name_en = item.nameEn;
+                        row.name_en = item.nameEn || item.name_en;
                         row.issuer = item.issuer;
-                        row.issuer_en = item.issuerEn;
+                        row.issuer_en = item.issuerEn || item.issuer_en;
                         row.date = item.date;
                         row.url = item.url;
                     }
                     return row;
                 });
 
-                const { error } = await supabase.from(tableName).insert(rowsToInsert);
-                if (error) errorMsg = error.message;
-                else success = true;
+                // 2. Upsert 실행
+                const { error: upsertError } = await supabase.from(tableName).upsert(upsertRows, { onConflict: 'id' });
+                
+                if (upsertError) {
+                    console.error(`[API] Upsert Error for ${tableName}:`, upsertError);
+                    throw new Error(`${tableName} 저장 중 오류: ${upsertError.message}`);
+                }
+
+                // 3. 지능형 삭제
+                const activeIds = upsertRows.filter(r => r.id).map(r => r.id);
+                if (activeIds.length > 0) {
+                    const { error: cleanupError } = await supabase
+                        .from(tableName)
+                        .delete()
+                        .not('id', 'in', activeIds);
+                    if (cleanupError) console.warn(`[API] Cleanup warning for ${tableName}:`, cleanupError);
+                } else if (upsertRows.length === 0) {
+                    await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                }
+                
+                success = true;
             } else {
                 success = true;
             }
@@ -185,11 +216,17 @@ export async function POST(request: Request) {
             else success = true;
         }
 
-        if (!success) {
-            return NextResponse.json({ error: errorMsg || 'Failed to save to Supabase' }, { status: 500 });
+        if (success) {
+            try {
+                revalidatePath('/');
+                revalidatePath('/admin');
+            } catch (revError) {
+                console.warn('[API] Revalidation failed:', revError);
+            }
+            return NextResponse.json({ success: true, message: 'Updated successfully' });
         }
 
-        return NextResponse.json({ success: true, message: 'Updated successfully' });
+        return NextResponse.json({ error: errorMsg || 'Failed to save to Supabase' }, { status: 500 });
     } catch (error) {
         console.error('Update Error:', error);
         return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update data' }, { status: 500 });
