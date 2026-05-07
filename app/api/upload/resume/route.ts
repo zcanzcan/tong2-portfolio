@@ -23,18 +23,27 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB (문서 파일은 이미지보�
 
 export const runtime = 'nodejs';
 
-// 관리자 인증 확인
+// 관리자 인증 확인 — admin_session 쿠키 값이 base64 hash와 일치하는지 검증
 function isAuthenticated(request: Request): boolean {
     const cookieHeader = request.headers.get('cookie');
     if (!cookieHeader) return false;
-    
+
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
         const [key, value] = cookie.trim().split('=');
         acc[key] = value;
         return acc;
     }, {} as Record<string, string>);
-    
-    return cookies['admin_session'] === 'true';
+
+    const adminSession = cookies['admin_session'];
+    const ADMIN_ID = process.env.ADMIN_ID;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-for-dev';
+
+    const expectedSessionValue = ADMIN_ID && ADMIN_PASSWORD
+        ? btoa(`${ADMIN_ID}:${ADMIN_PASSWORD}:${sessionSecret}`).substring(0, 32)
+        : null;
+
+    return !!adminSession && adminSession === expectedSessionValue;
 }
 
 export async function POST(request: Request) {

@@ -55,3 +55,8 @@ logs
 # OS
 Thumbs.db
 
+# Playwright / temp diagnostics
+.playwright-mcp/
+main-page-current.png
+tsc_output.txt
+

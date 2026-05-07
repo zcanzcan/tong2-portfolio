@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { sanitizeInput } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
+
+function bustPortfolioCache() {
+    try {
+        revalidateTag('portfolio');
+        revalidatePath('/');
+        revalidatePath('/admin');
+    } catch (e) {
+        console.warn('[projects API] revalidate failed:', e);
+    }
+}
 
 export async function GET() {
     try {
@@ -62,6 +73,7 @@ export async function POST(request: Request) {
             .single();
 
         if (error) throw error;
+        bustPortfolioCache();
         return NextResponse.json({ message: 'Project added successfully', project: data });
     } catch (error) {
         console.error('Error adding project:', error);
@@ -96,6 +108,7 @@ export async function PUT(request: Request) {
             .eq('id', id);
 
         if (error) throw error;
+        bustPortfolioCache();
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error updating project:', error);
@@ -118,6 +131,7 @@ export async function DELETE(request: Request) {
             .eq('id', id);
 
         if (error) throw error;
+        bustPortfolioCache();
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting project:', error);

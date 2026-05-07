@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { sanitizeInput, validateJSONSize } from '@/lib/security';
 
@@ -95,14 +95,15 @@ export async function POST(request: Request) {
             if (Array.isArray(sanitizedData)) {
                 // 1. 매핑 및 Upsert 데이터 준비 (ID 보존 필수)
                 const upsertRows = sanitizedData.map((item: any, index: number) => {
-                    const row: any = { 
+                    // id 보존: 36자 UUID면 그대로, 아니면 서버측에서 새로 부여 (NOT NULL 보장)
+                    const id = (item.id && typeof item.id === 'string' && item.id.length === 36)
+                        ? item.id
+                        : crypto.randomUUID();
+                    const row: any = {
+                        id,
                         sort_order: index,
                         updated_at: new Date().toISOString()
                     };
-                    
-                    if (item.id && typeof item.id === 'string' && item.id.length > 20) {
-                        row.id = item.id;
-                    }
 
                     if (tableName === 'experiences') {
                         row.role = item.role;
@@ -157,24 +158,37 @@ export async function POST(request: Request) {
                     return row;
                 });
 
-                // 2. Upsert 실행
-                const { error: upsertError } = await supabase.from(tableName).upsert(upsertRows, { onConflict: 'id' });
-                
+                // 2. Upsert 실행 — db가 새로 부여한 UUID까지 받아와야 cleanup 보정이 가능
+                const { data: upserted, error: upsertError } = await supabase
+                    .from(tableName)
+                    .upsert(upsertRows, { onConflict: 'id' })
+                    .select('id');
+
                 if (upsertError) {
                     console.error(`[API] Upsert Error for ${tableName}:`, upsertError);
                     throw new Error(`${tableName} 저장 중 오류: ${upsertError.message}`);
                 }
 
-                // 3. 지능형 삭제
-                const activeIds = upsertRows.filter(r => r.id).map(r => r.id);
-                if (activeIds.length > 0) {
-                    const { error: cleanupError } = await supabase
-                        .from(tableName)
-                        .delete()
-                        .not('id', 'in', activeIds);
-                    if (cleanupError) console.warn(`[API] Cleanup warning for ${tableName}:`, cleanupError);
-                } else if (upsertRows.length === 0) {
-                    await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                // 3. 지능형 삭제 — 삭제 대상 id를 명시적으로 골라 in() 으로 전달
+                //    (supabase-js의 .not('id','in',array) 는 PostgREST 형식 직렬화 이슈로 PGRST100 떨어짐)
+                const activeIds = new Set((upserted ?? []).map((r: any) => r.id).filter(Boolean));
+                const { data: existingRows, error: listError } = await supabase
+                    .from(tableName)
+                    .select('id');
+
+                if (listError) {
+                    console.warn(`[API] Cleanup list warning for ${tableName}:`, listError);
+                } else {
+                    const idsToDelete = (existingRows ?? [])
+                        .map((r: any) => r.id)
+                        .filter((id: string) => id && !activeIds.has(id));
+                    if (idsToDelete.length > 0) {
+                        const { error: deleteError } = await supabase
+                            .from(tableName)
+                            .delete()
+                            .in('id', idsToDelete);
+                        if (deleteError) console.warn(`[API] Cleanup delete warning for ${tableName}:`, deleteError);
+                    }
                 }
                 
                 success = true;
@@ -218,6 +232,7 @@ export async function POST(request: Request) {
 
         if (success) {
             try {
+                revalidateTag('portfolio'); // unstable_cache 무효화 — 새로고침 시 fresh data 반환
                 revalidatePath('/');
                 revalidatePath('/admin');
             } catch (revError) {

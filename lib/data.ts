@@ -8,7 +8,7 @@ export const getPortfolioData = unstable_cache(
         return _fetchPortfolioData();
     },
     ['portfolio-data'],
-    { revalidate: 60 }
+    { revalidate: 60, tags: ['portfolio'] }
 );
 
 async function _fetchPortfolioData(): Promise<PortfolioData | null> {
@@ -53,6 +53,7 @@ async function _fetchPortfolioData(): Promise<PortfolioData | null> {
                 image: profile.image
             } : {},
             heroButtons: (heroButtons || []).map(b => ({
+                id: b.id,
                 text: b.text,
                 textEn: b.text_en,
                 icon: b.icon,
@@ -105,6 +106,7 @@ async function _fetchPortfolioData(): Promise<PortfolioData | null> {
                 url: blogInfo.url
             } : {},
             skills: (skills || []).map(s => ({
+                id: s.id,
                 name: s.name,
                 icon: s.icon,
                 color: s.color

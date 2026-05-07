@@ -33,14 +33,14 @@ export function TechStack() {
 
   return (
     <SpotlightCard className="h-full flex flex-col" spotlightColor="rgba(6, 182, 212, 0.1)">
-      {/* 기술 스택 섹션 - 최대 높이 제한 및 스크롤 가능 */}
-      <div className="flex flex-col min-h-0" style={{ maxHeight: '50%' }}>
+      {/* 기술 스택 섹션 */}
+      <div className="flex flex-col min-h-0">
         <h2 className="text-xl font-bold mb-4 text-white/90 flex items-center gap-2 flex-shrink-0">
           <span className="w-8 h-[2px] bg-cyan-400 inline-block"></span>
           {t('tech-stack-title', '기술 스택', 'Tech Stack')}
         </h2>
 
-        <div className="overflow-y-auto pr-2 custom-scrollbar">
+        <div className="overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '240px' }}>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             <TooltipProvider delayDuration={0}>
               {skills.map((tech, index) => {
@@ -63,8 +63,8 @@ export function TechStack() {
         </div>
       </div>
 
-      {/* 자격증 섹션 - 최대 2개만 보이고 나머지는 스크롤 */}
-      <div className="flex flex-col min-h-0 mt-6 flex-1">
+      {/* 자격증 섹션 - 컨텐츠 만큼만 차지 */}
+      <div className="flex flex-col min-h-0 mt-6">
         <h2 className="text-xl font-bold mb-4 text-white/90 flex items-center gap-2 flex-shrink-0">
           <span className="w-8 h-[2px] bg-yellow-400 inline-block"></span>
           {t('certifications-title', '자격증', 'Certifications')}
@@ -75,7 +75,7 @@ export function TechStack() {
             {t('no-certifications', '자격증 정보가 없습니다', 'No certifications')}
           </div>
         ) : (
-          <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar" style={{ maxHeight: '140px' }}>
+          <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar" style={{ maxHeight: '320px' }}>
             {certifications.map((cert, index) => (
               <motion.div
                 key={index}

@@ -705,7 +705,7 @@ export default function AdminPage() {
     const renderExperience = () => {
         const addExperience = () => {
             setExperience([...experience, {
-                id: Date.now(),
+                id: crypto.randomUUID(),
                 role: '',
                 roleEn: '',
                 company: '',
@@ -885,7 +885,7 @@ export default function AdminPage() {
 
     const renderSkills = () => {
         const addSkill = () => {
-            setSkills([...skills, { name: '', icon: 'Circle', color: 'text-white' }])
+            setSkills([...skills, { id: crypto.randomUUID(), name: '', icon: 'Circle', color: 'text-white' }])
         }
         const removeSkill = (idx: number) => {
             setSkills(skills.filter((_, i) => i !== idx))
@@ -903,9 +903,9 @@ export default function AdminPage() {
             'Rocket', 'Target', 'Trophy', 'Award', 'Medal', 'Crown', 'Flame',
             'Atom', 'Brain', 'Lightbulb', 'Search', 'Filter', 'Grid', 'List',
             'BarChart', 'LineChart', 'PieChart', 'TrendingUp', 'TrendingDown',
-            'MessageSquare', 'Mail', 'Phone', 'Video', 'Camera', 'Mic', 'Headphones',
+            'MessageSquare', 'Mail', 'Phone', 'Camera', 'Mic', 'Headphones',
             'Play', 'Pause', 'SkipForward', 'SkipBack', 'Volume', 'VolumeX',
-            'Sun', 'Moon', 'Cloud', 'CloudRain', 'CloudSnow', 'Wind', 'Droplet',
+            'Sun', 'Moon', 'CloudRain', 'CloudSnow', 'Wind', 'Droplet',
             'Map', 'MapPin', 'Navigation', 'Compass', 'Globe2', 'Earth',
             'User', 'Users', 'UserPlus', 'UserMinus', 'UserCheck', 'UserX',
             'ShoppingCart', 'ShoppingBag', 'CreditCard', 'Wallet', 'Coins',
@@ -916,7 +916,7 @@ export default function AdminPage() {
             'Book', 'BookOpen', 'BookMarked', 'GraduationCap', 'School',
             'Briefcase', 'Suitcase', 'Luggage', 'FolderOpen', 'Archive',
             'Coffee', 'Utensils', 'Wine', 'Beer', 'Cookie',
-            'Heart', 'HeartHandshake', 'Smile', 'Laugh', 'Frown',
+            'HeartHandshake', 'Smile', 'Laugh', 'Frown',
             'AlertCircle', 'AlertTriangle', 'Info', 'HelpCircle', 'CheckCircle',
             'XCircle', 'Ban', 'ShieldAlert', 'ShieldCheck', 'ShieldOff',
             'Bot', 'Sparkles'
@@ -1349,7 +1349,7 @@ export default function AdminPage() {
     const renderCertifications = () => {
         const addCertification = () => {
             setCertifications([...certifications, {
-                id: Date.now(),
+                id: crypto.randomUUID(),
                 name: '',
                 nameEn: '',
                 issuer: '',
@@ -1782,7 +1782,7 @@ export default function AdminPage() {
     const renderPublications = () => {
         const addPublication = () => {
             const newPub = {
-                id: `pub_${Date.now()}`,
+                id: crypto.randomUUID(),
                 tag: '대표 저서',
                 tagEn: 'Featured Book',
                 title: '',
@@ -2937,7 +2937,7 @@ export default function AdminPage() {
 
     const renderSocials = () => {
         const addSocial = () => {
-            setSocials([...socials, { id: `social_${Date.now()}`, name: '', icon: 'Link', url: '', color: 'hover:text-white' }])
+            setSocials([...socials, { id: crypto.randomUUID(), name: '', icon: 'Link', url: '', color: 'hover:text-white' }])
         }
         const removeSocial = (idx: number) => {
             setSocials(socials.filter((_, i) => i !== idx))
